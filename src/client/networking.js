@@ -1,6 +1,6 @@
 import io from 'socket.io-client';
 import { throttle } from 'throttle-debounce';
-//import { processGameUpdate } from './state';
+import { processGameUpdate } from './state';
 
 const Constants = require('../shared/constants');
 
@@ -16,7 +16,7 @@ const connectedPromise = new Promise(resolve => {
 export const connect = onGameOver => (
   connectedPromise.then(() => {
     // Register callbacks
-    //socket.on(Constants.MSG_TYPES.GAME_UPDATE, processGameUpdate);
+    socket.on(Constants.MSG_TYPES.GAME_UPDATE, processGameUpdate);
     socket.on(Constants.MSG_TYPES.GAME_OVER, onGameOver);
     // socket.on('disconnect', () => {
     //   console.log('Disconnected from server.');
@@ -32,6 +32,6 @@ export const play = username => {
   socket.emit(Constants.MSG_TYPES.JOIN_GAME, username);
 };
 
-export const updateDirection = throttle(20, dir => {
-  socket.emit(Constants.MSG_TYPES.INPUT, dir);
+export const sendInput = throttle(20, (x,y) => {
+  socket.emit(Constants.MSG_TYPES.INPUT, [x,y]);
 });

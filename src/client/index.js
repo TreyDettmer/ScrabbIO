@@ -1,6 +1,8 @@
 import { connect, play } from './networking';
 import { startRendering} from './render';
-
+import { initState } from './state';
+import { startCapturingInput, stopCapturingInput } from './input';
+import {setLobbyboardHidden} from './lobbyboard';
 import './css/style.css';
 
 const playMenu = document.getElementById('play-menu');
@@ -15,17 +17,22 @@ Promise.all([
   playButton.onclick = () => {
     play(usernameInput.value);
     playMenu.classList.add("hidden");
+    initState();
+    startCapturingInput();
+    startRendering();
+    setLobbyboardHidden(false);
   }
 
 
 
 
-  startRendering();
+
 
 }).catch(console.error);
 
 
 
 function onGameOver() {
+  stopCapturingInput();
   console.log("GameOver?");
 }
