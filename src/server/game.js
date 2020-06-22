@@ -41,10 +41,14 @@ class Game {
       this.players[socket.id].boardSpaces[row] = []
       for (let col = 0; col < 19; col++)
       {
-        this.players[socket.id].boardSpaces[row][col] = spaces[row][col];
+        this.players[socket.id].boardSpaces[row][col] = spaces[0][row][col];
       }
     }
-    
+    for (let i = 0; i < Constants.TILES_PER_PLAYER;i++)
+    {
+      this.players[socket.id].tileRackSpaces[i] = spaces[1][i];
+    }
+
   }
 
   handleInput(socket, coord) {

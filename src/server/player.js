@@ -6,6 +6,7 @@ class Player {
     this.tiles = [];
     this.clickPosition = [-1,-1];
     this.boardSpaces = [];
+    this.tileRackSpaces = [];
   }
 
   serializeForUpdate()
@@ -15,7 +16,8 @@ class Player {
       username: this.username,
       tiles: this.tiles,
       clickPosition: this.clickPosition,
-      boardSpaces: this.boardSpaces
+      boardSpaces: this.boardSpaces,
+      tileRackSpaces: this.tileRackSpaces
     };
   }
 
