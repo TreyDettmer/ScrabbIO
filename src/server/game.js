@@ -34,6 +34,19 @@ class Game {
     delete this.players[socket.id];
   }
 
+  handleCanvas(socket,spaces)
+  {
+    for (let row = 0; row < 19; row++)
+    {
+      this.players[socket.id].boardSpaces[row] = []
+      for (let col = 0; col < 19; col++)
+      {
+        this.players[socket.id].boardSpaces[row][col] = spaces[row][col];
+      }
+    }
+    
+  }
+
   handleInput(socket, coord) {
     if (this.players[socket.id])
     {
@@ -52,7 +65,7 @@ class Game {
         this.tiles.push(new Tile(tile.letter,tile.value));
       }
     })
-    //this.board.boardspaces[1][1].assignTile(this.tiles[0]);
+    this.board.boardspaces[1][1].assignTile(this.tiles[1]);
   }
 
   startGame()

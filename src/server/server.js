@@ -34,6 +34,7 @@ io.on('connection', socket => {
 
   socket.on(Constants.MSG_TYPES.JOIN_GAME, joinGame);
   socket.on(Constants.MSG_TYPES.INPUT, handleInput);
+  socket.on(Constants.MSG_TYPES.INIT_CANVAS,receiveCanvas);
   socket.on('disconnect', onDisconnect);
 });
 
@@ -51,4 +52,8 @@ function handleInput(coord) {
 
 function onDisconnect() {
   game.removePlayer(this);
+}
+
+function receiveCanvas(spaces){
+  game.handleCanvas(this,spaces);
 }

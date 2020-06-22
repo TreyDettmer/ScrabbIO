@@ -35,3 +35,7 @@ export const play = username => {
 export const sendInput = throttle(20, (x,y) => {
   socket.emit(Constants.MSG_TYPES.INPUT, [x,y]);
 });
+
+export const sendCanvas = spaces => {
+  socket.emit(Constants.MSG_TYPES.INIT_CANVAS,spaces);
+}

@@ -1,6 +1,6 @@
 
 import { sendInput } from './networking';
-
+const canvas = document.getElementById('game-canvas');
 
 function onMouseInput(e) {
   handleInput(e.clientX, e.clientY);
@@ -13,7 +13,7 @@ function onTouchInput(e) {
 
 
 function handleInput(x, y) {
-  
+
   sendInput(x,y);
 }
 
@@ -23,14 +23,14 @@ function handleInput(x, y) {
 
 export function startCapturingInput() {
   //window.addEventListener('mousemove', onMouseInput);
-  window.addEventListener('click', onMouseInput);
+  canvas.addEventListener('click', onMouseInput);
   //window.addEventListener('touchstart', onTouchInput);
   //window.addEventListener('touchmove', onTouchInput);
 }
 
 export function stopCapturingInput() {
   //window.removeEventListener('mousemove', onMouseInput);
-  window.removeEventListener('click', onMouseInput);
+  canvas.removeEventListener('click', onMouseInput);
   //window.removeEventListener('touchstart', onTouchInput);
   //window.removeEventListener('touchmove', onTouchInput);
 }

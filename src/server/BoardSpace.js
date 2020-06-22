@@ -1,6 +1,9 @@
-class BoardSpace {
+const GameObject = require('./GameObject');
+
+class BoardSpace extends GameObject {
   constructor()
   {
+    super();
     this.tile = null;
     this.bOccupied = false;
   }
