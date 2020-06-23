@@ -39,3 +39,11 @@ export const sendInput = throttle(20, (x,y) => {
 export const sendCanvas = spaces => {
   socket.emit(Constants.MSG_TYPES.INIT_CANVAS,spaces);
 }
+
+export const confirmMove = () => {
+  socket.emit(Constants.MSG_TYPES.PLAYER_ACTION.CONFIRM_MOVE);
+}
+
+export const endTurn = () => {
+  socket.emit(Constants.MSG_TYPES.PLAYER_ACTION.END_TURN);
+}

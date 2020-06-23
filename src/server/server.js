@@ -35,6 +35,8 @@ io.on('connection', socket => {
   socket.on(Constants.MSG_TYPES.JOIN_GAME, joinGame);
   socket.on(Constants.MSG_TYPES.INPUT, handleInput);
   socket.on(Constants.MSG_TYPES.INIT_CANVAS,receiveCanvas);
+  socket.on(Constants.MSG_TYPES.PLAYER_ACTION.CONFIRM_MOVE,confirmMove);
+  socket.on(Constants.MSG_TYPES.PLAYER_ACTION.END_TURN,endTurn);
   socket.on('disconnect', onDisconnect);
 });
 
@@ -56,4 +58,12 @@ function onDisconnect() {
 
 function receiveCanvas(spaces){
   game.handleCanvas(this,spaces);
+}
+
+function confirmMove(){
+  game.confirmMove(this);
+}
+
+function endTurn(){
+  game.endTurn(this);
 }

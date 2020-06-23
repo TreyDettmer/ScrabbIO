@@ -7,6 +7,11 @@ module.exports = Object.freeze({
     INPUT: 'input',
     GAME_OVER: 'dead',
     INIT_CANVAS: 'init_canvas',
+    PLAYER_ACTION:
+    {
+      CONFIRM_MOVE: 'confirm_move',
+      END_TURN: 'end_turn'
+    }
   },
   BOARD: {
     SIZE: 600,

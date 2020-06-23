@@ -1,10 +1,10 @@
-const BoardSpace = require('./BoardSpace');
+const GameSpace = require('./GameSpace');
 
 
 class Board {
   constructor()
   {
-    this.boardspaces = [];
+    this.boardSpaces = [];
     this.init();
   }
 
@@ -12,10 +12,10 @@ class Board {
   {
     for (let row = 0; row < 19; row++)
     {
-      this.boardspaces[row] = []
+      this.boardSpaces[row] = []
       for (let col = 0; col < 19; col++)
       {
-        this.boardspaces[row][col] = new BoardSpace();
+        this.boardSpaces[row][col] = new GameSpace();
       }
     }
   }

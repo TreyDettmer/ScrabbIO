@@ -11,7 +11,9 @@ class Game {
     this.players = {};
     this.bullets = [];
     this.tiles = [];
+    this.hotBoardSpaces = [];
     this.board = null;
+    this.playerTurnIndex = 0;
     this.initGame();
 
     this.lastUpdateTime = Date.now();
@@ -36,19 +38,149 @@ class Game {
 
   handleCanvas(socket,spaces)
   {
+    console.log(this.players[socket.id].selectedObjects);
     for (let row = 0; row < 19; row++)
     {
       this.players[socket.id].boardSpaces[row] = []
       for (let col = 0; col < 19; col++)
       {
         this.players[socket.id].boardSpaces[row][col] = spaces[0][row][col];
+        if (spaces[0][row][col].bSelected)
+        {
+          if (this.ObjectAlreadySelected(this.players[socket.id],true) == false)
+          {
+            console.log("adding boardSpace to selected objects")
+            this.players[socket.id].selectedObjects.push({boardSpace: this.players[socket.id].boardSpaces[row][col], rowcol: [row,col]});
+          }
+        }
       }
     }
     for (let i = 0; i < Constants.TILES_PER_PLAYER;i++)
     {
       this.players[socket.id].tileRackSpaces[i] = spaces[1][i];
+      if (spaces[1][i].bSelected)
+      {
+        if (this.ObjectAlreadySelected(this.players[socket.id],false) == false)
+        {
+          console.log("adding tile to selected objects")
+          this.players[socket.id].selectedObjects.push({tileRackSpace:this.players[socket.id].tileRackSpaces[i],rowcol:[i]});
+        }
+
+      }
     }
 
+  }
+
+  ObjectAlreadySelected(player,bBoardSpace)
+  {
+    if (bBoardSpace)
+    {
+      let bFoundBoardSpace = false;
+      for (let i = 0; i < player.selectedObjects.length;i++)
+      {
+
+          if ("boardSpace" in player.selectedObjects[i])
+          {
+            bFoundBoardSpace = true;
+          }
+
+      }
+      return bFoundBoardSpace;
+    }
+    else
+    {
+      let bFoundTileRackSpace = false;
+      for (let i = 0; i < player.selectedObjects.length;i++)
+      {
+
+          if ("tileRackSpace" in player.selectedObjects[i])
+          {
+            bFoundTileRackSpace = true;
+          }
+
+      }
+      return bFoundTileRackSpace;
+
+    }
+
+
+  }
+
+
+  confirmMove(socket)
+  {
+    var player = this.players[socket.id];
+    if (player.selectedObjects.length == 2)
+    {
+      if ('tileRackSpace' in player.selectedObjects[0])
+      {
+        if ('boardSpace' in player.selectedObjects[1])
+        {
+          let tile = player.tiles[player.selectedObjects[0].rowcol[0]];
+          //console.log("Tile chosen: " + tile.letter);
+          let boardSpace = this.board.boardSpaces[player.selectedObjects[1].rowcol[0]][player.selectedObjects[1].rowcol[1]];
+          if (boardSpace.tile)
+          {
+            player.tileRackSpaces[player.selectedObjects[0].rowcol[0]].bSelected = false;
+            player.boardSpaces[player.selectedObjects[1].rowcol[0]][player.selectedObjects[1].rowcol[1]].bSelected = false;
+            player.selectedObjects = [];
+            console.log("can't put there");
+            return;
+          }
+          //console.log("BoardSpace chosen: " + boardSpace);
+          boardSpace.assignTile(tile)
+          this.hotBoardSpaces.push(boardSpace);
+          player.tiles.splice(player.selectedObjects[0].rowcol[0],1);
+          player.tileRackSpaces[player.selectedObjects[0].rowcol[0]].bSelected = false;
+          player.boardSpaces[player.selectedObjects[1].rowcol[0]][player.selectedObjects[1].rowcol[1]].bSelected = false;
+          player.selectedObjects = [];
+          console.log("Played tile");
+        }
+      }
+    }
+  }
+
+  endTurn(socket)
+  {
+    var player = this.players[socket.id];
+    //look for words
+    this.CheckWords();
+  }
+
+  CheckWords()
+  {
+    //horizontal pass
+    let firstLetterIndex = -1;
+    let lastLetterIndex = 19;
+    let words = []
+    let currentWord = [];
+    for (let row = 0; row < 19; row++)
+    {
+      for (let col = 0; col < 19; col++)
+      {
+        if (this.board.boardSpaces[row][col].tile)
+        {
+          if (currentWord.length == 0)
+          {
+            firstLetterIndex = col;
+          }
+          currentWord.push(this.board.boardSpaces[row][col].tile.letter);
+
+
+        }
+        else
+        {
+          if (currentWord.length > 0)
+          {
+            lastLetterIndex = col-1;
+            words.push([...currentWord]);
+            currentWord = [];
+
+          }
+        }
+      }
+    }
+    console.log("Found " + words.length + " words.");
   }
 
   handleInput(socket, coord) {
@@ -69,7 +201,7 @@ class Game {
         this.tiles.push(new Tile(tile.letter,tile.value));
       }
     })
-    this.board.boardspaces[1][1].assignTile(this.tiles[1]);
+    //this.board.boardSpaces[1][1].assignTile(this.tiles[1]);
   }
 
   startGame()
@@ -95,6 +227,8 @@ class Game {
       startingIndex += Constants.TILES_PER_PLAYER;
 
     });
+    this.players[Object.keys(this.sockets)[0]].bMyTurn = true;
+
 
   }
 

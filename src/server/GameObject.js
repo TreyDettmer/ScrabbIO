@@ -1,11 +1,13 @@
 class GameObject {
 
-  constructor()
+  constructor(xPosition = 0,yPosition = 0,width=1,height=1,bSelected=false)
   {
-    this.xPosition = 0;
-    this.yPosition = 0;
-    this.width = 1;
-    this.height = 1;
+
+    this.xPosition = xPosition;
+    this.yPosition = yPosition;
+    this.width = width;
+    this.height = height;
+    this.bSelected = bSelected;
   }
 
   set(xPosition,yPosition,width,height)
@@ -14,6 +16,12 @@ class GameObject {
     this.yPosition = yPosition;
     this.width = width;
     this.height = height;
+  }
+
+  contains(position) {
+
+      return this.xPosition <= position[0] && position[0] <= this.xPosition + this.width &&
+             this.yPosition <= position[1] && position[1] <= this.yPosition + this.height;
   }
 
 }
