@@ -4,6 +4,10 @@ const Board = require('./Board');
 const Tile = require('./Tile');
 const TileData = require('./TileData');
 // const applyCollisions = require('./collisions');
+const fs = require('fs');
+const path = require('path');
+const lineReader = require('line-reader');
+const alphabet = "abcdefghijklmnopqrstuvwxyz";
 
 class Game {
   constructor() {
@@ -38,7 +42,7 @@ class Game {
 
   handleCanvas(socket,spaces)
   {
-    console.log(this.players[socket.id].selectedObjects);
+    //console.log(this.players[socket.id].selectedObjects);
     for (let row = 0; row < 19; row++)
     {
       this.players[socket.id].boardSpaces[row] = []
@@ -60,18 +64,19 @@ class Game {
       this.players[socket.id].tileRackSpaces[i] = spaces[1][i];
       if (spaces[1][i].bSelected)
       {
-        if (this.ObjectAlreadySelected(this.players[socket.id],false) == false)
+        if (this.ObjectAlreadySelected(this.players[socket.id],false,i) == false)
         {
-          console.log("adding tile to selected objects")
+          // console.log("adding tile to selected objects")
           this.players[socket.id].selectedObjects.push({tileRackSpace:this.players[socket.id].tileRackSpaces[i],rowcol:[i]});
         }
+
 
       }
     }
 
   }
 
-  ObjectAlreadySelected(player,bBoardSpace)
+  ObjectAlreadySelected(player,bBoardSpace,index = -1)
   {
     if (bBoardSpace)
     {
@@ -90,15 +95,19 @@ class Game {
     else
     {
       let bFoundTileRackSpace = false;
+
+
       for (let i = 0; i < player.selectedObjects.length;i++)
       {
-
-          if ("tileRackSpace" in player.selectedObjects[i])
+          if ("tileRackSpace" in player.selectedObjects[i] && player.selectedObjects[i].rowcol == index)
           {
             bFoundTileRackSpace = true;
           }
 
       }
+
+
+
       return bFoundTileRackSpace;
 
     }
@@ -173,14 +182,66 @@ class Game {
           if (currentWord.length > 0)
           {
             lastLetterIndex = col-1;
-            words.push([...currentWord]);
+            words.push(currentWord.join(''));
             currentWord = [];
 
           }
         }
       }
     }
-    console.log("Found " + words.length + " words.");
+
+    let foundIllegalWord = false;
+    console.log("Words: " + words);
+    for (let i = 0; i < words.length;i++)
+    {
+
+      if (!this.lookUpWord(words[i]))
+      {
+
+        foundIllegalWord = true;
+        break;
+      }
+    }
+    if (foundIllegalWord)
+    {
+      console.log("Found illegal word");
+    }
+    else
+    {
+      console.log("all words are legal");
+    }
+  }
+
+  lookUpWord(word)
+  {
+    let firstLetterWordIndex = word[0];
+    let firstLetterAlphabetIndex = alphabet.indexOf(firstLetterWordIndex);
+    let filePath = '../DictionaryData/' + word[0];
+    if (word.length > 1)
+    {
+      filePath = path.join(__dirname, 'DictionaryData', word[0], word[1] + '.txt');
+
+    }
+    else
+    {
+      filePath = path.join(__dirname, 'DictionaryData', word[0], word[0] + '.txt');
+       //'../DictionaryData/' + word[0] + '/' + word[0] + '.txt';
+    }
+    var bFoundWord = false;
+    //var jsonPath = path.join(__dirname, '..', 'DictionaryData', 'dev', 'foobar.json');
+    //var dataString = fs.readFileSync(filePath, 'utf8');
+    const data = fs.readFileSync(filePath, 'utf8');
+
+    if (data.includes(word))
+    {
+      bFoundWord = true;
+    }
+
+
+    return bFoundWord;
+
+
+
   }
 
   handleInput(socket, coord) {
@@ -188,6 +249,24 @@ class Game {
     {
       //console.log("handled inpu");
       this.players[socket.id].setClickPosition(coord[0],coord[1]);
+    }
+  }
+
+  switchTiles(player)
+  {
+    if ('tileRackSpace' in player.selectedObjects[0] && 'tileRackSpace' in player.selectedObjects[1])
+    {
+      let tile1 = player.tiles[player.selectedObjects[0].rowcol[0]];
+      let tile1Index = player.selectedObjects[0].rowcol[0];
+      let tile2 = player.tiles[player.selectedObjects[1].rowcol[0]];
+      let tile2Index = player.selectedObjects[1].rowcol[0];
+      player.tiles[tile1Index] = tile2;
+      player.tiles[tile2Index] = tile1;
+      player.tileRackSpaces[tile1Index].bSelected = false;
+      player.tileRackSpaces[tile2Index].bSelected = false;
+      player.selectedObjects = [];
+      console.log("switched tiles");
+
     }
   }
 
@@ -264,7 +343,12 @@ class Game {
       Object.keys(this.sockets).forEach(playerID => {
         const socket = this.sockets[playerID];
         const player = this.players[playerID];
-        //console.log(player.clickPosition);
+
+        if (player.selectedObjects.length == 2)
+        {
+
+          this.switchTiles(player);
+        }
         socket.emit(Constants.MSG_TYPES.GAME_UPDATE,this.createUpdate(player,lobbyboard));
         player.setClickPosition(-1,-1);
       })
