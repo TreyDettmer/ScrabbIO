@@ -1,7 +1,3 @@
-iachimo
-iago
-iai
-iain
 iamb
 iambi
 iambic
@@ -14,11 +10,7 @@ iambographers
 iambs
 iambus
 iambuses
-ian
 ianthine
-iapetus
-iastic
-iata
 iatric
 iatrical
 iatrochemical
@@ -26,3 +18,8 @@ iatrochemist
 iatrochemistry
 iatrochemists
 iatrogenic
+iatrogenically
+iatrogenicities
+iatrogenicity
+iatrogenies
+iatrogeny

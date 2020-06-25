@@ -1,4 +1,6 @@
 cwm
-cwmbran
 cwms
-cwt
+cwtch
+cwtched
+cwtches
+cwtching

@@ -1,6 +1,7 @@
 module.exports = Object.freeze({
   TILES_PER_PLAYER: 7,
   MAP_SIZE: 3000,
+  BOARD_TILES: 15,
   MSG_TYPES: {
     JOIN_GAME: 'join_game',
     GAME_UPDATE: 'update',
@@ -20,6 +21,7 @@ module.exports = Object.freeze({
     BORDER_COLOR: '#8a7754',
     BOARD_SPACES: {
       COLOR: '#c4baa3',
+      CENTER_COLOR: '#deb8c8',
       PADDING: 0.03,
     },
   },

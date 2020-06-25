@@ -1,7 +1,6 @@
-ao
-aonian
 aorist
 aoristic
+aoristically
 aorists
 aorta
 aortae
@@ -9,5 +8,9 @@ aortal
 aortas
 aortic
 aortitis
+aortitises
+aortographic
+aortographies
+aortography
 aoudad
 aoudads

@@ -1,4 +1,4 @@
-qom
 qoph
 qophs
-qoran
+qorma
+qormas

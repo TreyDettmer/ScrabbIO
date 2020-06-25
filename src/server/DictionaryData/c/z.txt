@@ -1,7 +1,12 @@
+czapka
+czapkas
 czar
 czardas
 czardases
 czardom
+czardoms
+czarevich
+czareviches
 czarevitch
 czarevitches
 czarevna
@@ -9,6 +14,7 @@ czarevnas
 czarina
 czarinas
 czarism
+czarisms
 czarist
 czarists
 czaritsa
@@ -16,12 +22,3 @@ czaritsas
 czaritza
 czaritzas
 czars
-czarship
-czech
-czechic
-czechoslovak
-czechoslovakia
-czechoslovakian
-czechoslovakians
-czechoslovaks
-czechs

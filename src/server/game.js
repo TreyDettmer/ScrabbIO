@@ -6,8 +6,8 @@ const TileData = require('./TileData');
 // const applyCollisions = require('./collisions');
 const fs = require('fs');
 const path = require('path');
-const lineReader = require('line-reader');
-const alphabet = "abcdefghijklmnopqrstuvwxyz";
+const lineReader = require('line-reader-sync');
+const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
 class Game {
   constructor() {
@@ -19,7 +19,8 @@ class Game {
     this.board = null;
     this.playerTurnIndex = 0;
     this.initGame();
-
+    this.wordsPlayed = [];
+    this.wordPositionsPlayed = [];
     this.lastUpdateTime = Date.now();
     this.bGameStarted = false;
     this.shouldSendUpdate = false;
@@ -43,17 +44,17 @@ class Game {
   handleCanvas(socket,spaces)
   {
     //console.log(this.players[socket.id].selectedObjects);
-    for (let row = 0; row < 19; row++)
+    for (let row = 0; row < Constants.BOARD_TILES; row++)
     {
       this.players[socket.id].boardSpaces[row] = []
-      for (let col = 0; col < 19; col++)
+      for (let col = 0; col < Constants.BOARD_TILES; col++)
       {
         this.players[socket.id].boardSpaces[row][col] = spaces[0][row][col];
         if (spaces[0][row][col].bSelected)
         {
           if (this.ObjectAlreadySelected(this.players[socket.id],true) == false)
           {
-            console.log("adding boardSpace to selected objects")
+            //console.log("adding boardSpace to selected objects")
             this.players[socket.id].selectedObjects.push({boardSpace: this.players[socket.id].boardSpaces[row][col], rowcol: [row,col]});
           }
         }
@@ -138,12 +139,13 @@ class Game {
           }
           //console.log("BoardSpace chosen: " + boardSpace);
           boardSpace.assignTile(tile)
+          boardSpace.bOccupied = true;
           this.hotBoardSpaces.push(boardSpace);
           player.tiles.splice(player.selectedObjects[0].rowcol[0],1);
           player.tileRackSpaces[player.selectedObjects[0].rowcol[0]].bSelected = false;
           player.boardSpaces[player.selectedObjects[1].rowcol[0]][player.selectedObjects[1].rowcol[1]].bSelected = false;
           player.selectedObjects = [];
-          console.log("Played tile");
+          //console.log("Played tile");
         }
       }
     }
@@ -152,20 +154,65 @@ class Game {
   endTurn(socket)
   {
     var player = this.players[socket.id];
-    //look for words
-    this.CheckWords();
+    //check if valid moves were made
+    if (this.CheckWords())
+    {
+      let tilesNeeded = Constants.TILES_PER_PLAYER - player.tiles.length;
+      if (this.tiles.length >= tilesNeeded)
+      {
+        for (let i = 0; i < tilesNeeded;i++)
+        {
+          player.tiles.push(this.tiles.pop());
+        }
+
+      }
+      else
+      {
+        for (let i = 0; i < this.tiles.length;i++)
+        {
+          player.tiles.push(this.tiles.pop());
+        }
+      }
+      if (this.players[Object.keys(this.sockets)[0]].bMyTurn)
+      {
+        this.players[Object.keys(this.sockets)[0]].bMyTurn = false;
+        this.players[Object.keys(this.sockets)[1]].bMyTurn = true;
+        this.playerTurnIndex = 1;
+      }
+      else
+      {
+        this.players[Object.keys(this.sockets)[0]].bMyTurn = true;
+        this.players[Object.keys(this.sockets)[1]].bMyTurn = false;
+        this.playerTurnIndex = 0;
+      }
+
+    }
+    else
+    {
+      for (let i = 0; i < this.hotBoardSpaces.length; i++)
+      {
+        player.tiles.push(this.hotBoardSpaces[i].tile);
+        this.hotBoardSpaces[i].bOccupied = false;
+        this.hotBoardSpaces[i].tile = null;
+      }
+    }
+    this.hotBoardSpaces = [];
   }
 
   CheckWords()
   {
+    console.log("Words already played: " + this.wordsPlayed);
     //horizontal pass
     let firstLetterIndex = -1;
-    let lastLetterIndex = 19;
+    let lastLetterIndex = Constants.BOARD_TILES;
     let words = []
+    let wordPositions = [];
     let currentWord = [];
-    for (let row = 0; row < 19; row++)
+    let currentWordLetterPositions = [];
+    let validTurn = true;
+    for (let row = 0; row < Constants.BOARD_TILES; row++)
     {
-      for (let col = 0; col < 19; col++)
+      for (let col = 0; col < Constants.BOARD_TILES; col++)
       {
         if (this.board.boardSpaces[row][col].tile)
         {
@@ -174,6 +221,8 @@ class Game {
             firstLetterIndex = col;
           }
           currentWord.push(this.board.boardSpaces[row][col].tile.letter);
+          var rowcol = [row,col]
+          currentWordLetterPositions.push(rowcol);
 
 
         }
@@ -181,58 +230,291 @@ class Game {
         {
           if (currentWord.length > 0)
           {
-            lastLetterIndex = col-1;
-            words.push(currentWord.join(''));
-            currentWord = [];
+            if (currentWord.length == 1)
+            {
+              lastLetterIndex = col-1;
+              currentWord = [];
+              currentWordLetterPositions = [];
+            }
+            else
+            {
+              lastLetterIndex = col-1;
+              words.push(currentWord.join(''));
+              wordPositions.push(currentWordLetterPositions);
+              currentWordLetterPositions = [];
+              currentWord = [];
+            }
 
           }
         }
       }
     }
 
-    let foundIllegalWord = false;
-    console.log("Words: " + words);
-    for (let i = 0; i < words.length;i++)
+    //vertical pass
+    firstLetterIndex = -1;
+    lastLetterIndex = Constants.BOARD_TILES;
+    currentWord = [];
+    currentWordLetterPositions = [];
+    for (let col = 0; col < Constants.BOARD_TILES; col++)
+    {
+      for (let row = 0; row < Constants.BOARD_TILES; row++)
+      {
+        if (this.board.boardSpaces[row][col].tile)
+        {
+          if (currentWord.length == 0)
+          {
+            firstLetterIndex = row;
+          }
+          currentWord.push(this.board.boardSpaces[row][col].tile.letter);
+          var rowcol = [row,col]
+          currentWordLetterPositions.push(rowcol);
+
+
+        }
+        else
+        {
+          if (currentWord.length > 0)
+          {
+            if (currentWord.length == 1)
+            {
+              lastLetterIndex = row-1;
+              currentWord = [];
+              currentWordLetterPositions = [];
+            }
+            else
+            {
+              lastLetterIndex = row-1;
+              words.push(currentWord.join(''));
+              wordPositions.push(currentWordLetterPositions);
+              currentWordLetterPositions = [];
+              currentWord = [];
+            }
+
+          }
+        }
+      }
+    }
+    console.log("Word positions: " + wordPositions)
+    //check for isolated words (word that isn't attached to another word)
+    let foundIsolatedWord = false;
+    if (this.wordsPlayed.length > 0)
     {
 
-      if (!this.lookUpWord(words[i]))
+      for (var wordIndex = 0; wordIndex < words.length; wordIndex++)
       {
+        let _word = words[wordIndex];
+        let _wordPosition = wordPositions[wordIndex];
+        let foundLetterInOtherWord = false;
+        //iterate through current words on the board
+        for (let letterIndex = 0; letterIndex < _word.length; letterIndex++)
+        {
+          let letterPosition = _wordPosition[letterIndex];
+          for (let otherWordIndex = 0; otherWordIndex < words.length; otherWordIndex++)
+          {
+            if (otherWordIndex == wordIndex){continue;}
+            let otherWord = words[otherWordIndex];
+            let otherWordPosition = wordPositions[otherWordIndex];
+            for (let otherWordLetterIndex = 0; otherWordLetterIndex < otherWord.length;otherWordLetterIndex++)
+            {
+              let otherLetterPosition = otherWordPosition[otherWordLetterIndex];
+              if (otherLetterPosition[0] == letterPosition[0] && otherLetterPosition[1] == letterPosition[1])
+              {
+                foundLetterInOtherWord = true;
+              }
+            }
+          }
+          //iterate through past words on the board
+          // (for instance if we added an 'h' to 'it' to make 'hit', we want to still look at 'it' as another word)
+          for (let oldWordIndex = 0; oldWordIndex < this.wordsPlayed.length;oldWordIndex++)
+          {
+            let oldWord = this.wordsPlayed[oldWordIndex];
+            console.log("comparing " + _word + " with " + oldWord);
+            let oldWordPosition = this.wordPositionsPlayed[oldWordIndex];
+            console.log("OldwordPosition: " + oldWordPosition);
+            console.log("CurrentwordPosition: " + _wordPosition);
 
-        foundIllegalWord = true;
+            for (let oldWordLetterIndex = 0; oldWordLetterIndex < oldWord.length;oldWordLetterIndex++)
+            {
+              let oldLetterPosition = oldWordPosition[oldWordLetterIndex];
+              if (oldLetterPosition[0] == letterPosition[0] && oldLetterPosition[1] == letterPosition[1])
+              {
+                foundLetterInOtherWord = true;
+              }
+            }
+          }
+
+        }
+
+
+
+
+        if (!foundLetterInOtherWord)
+        {
+          //the word is isolated so it is illegal
+          foundIsolatedWord = true;
+          console.log(words[wordIndex] + " is isolated and illegal");
+          break;
+
+        }
+      }
+
+    }
+    let foundIsolatedLetter = false;
+    //check for single isolated tiles
+    for (let row = 0; row < Constants.BOARD_TILES;row++)
+    {
+      let bShouldContinue = true;
+      for (let col = 0; col < Constants.BOARD_TILES;col++)
+      {
+        let boardSpace = this.board.boardSpaces[row][col];
+        if (boardSpace.bOccupied)
+        {
+          let bIsolated = true;
+          //check right
+          if (col+1 < Constants.BOARD_TILES){
+            if (this.board.boardSpaces[row][col+1] != null)
+            {
+              if (this.board.boardSpaces[row][col+1].bOccupied)
+              {
+                bIsolated = false;
+              }
+            }
+          }
+          //check left
+          if (col-1 >= 0)
+          {
+            if (this.board.boardSpaces[row][col-1] != null)
+            {
+              if (this.board.boardSpaces[row][col-1].bOccupied)
+              {
+                bIsolated = false;
+              }
+            }
+          }
+          //check below
+          if (row+1 < Constants.BOARD_TILES)
+          {
+            if (this.board.boardSpaces[row+1][col] != null)
+            {
+              if (this.board.boardSpaces[row+1][col].bOccupied)
+              {
+                bIsolated = false;
+              }
+            }
+          }
+          //check above
+          if (row-1 >= 0)
+          {
+            if (this.board.boardSpaces[row-1][col] != null)
+            {
+              if (this.board.boardSpaces[row-1][col].bOccupied)
+              {
+                bIsolated = false;
+              }
+            }
+          }
+          if (bIsolated)
+          {
+            console.log("Found isolated letter");
+            foundIsolatedLetter = true;
+            bShouldContinue = false;
+            break;
+          }
+        }
+      }
+      if (!bShouldContinue)
+      {
         break;
       }
     }
-    if (foundIllegalWord)
+
+
+    console.log("words: " + words);
+
+    let foundIllegalWord = false;
+    if (foundIsolatedWord || foundIsolatedLetter)
     {
-      console.log("Found illegal word");
+      foundIllegalWord = true;
+    }
+    if (words.length > 0)
+    {
+      if (!foundIllegalWord)
+      {
+        for (let i = 0; i < words.length;i++)
+        {
+
+          if (!this.lookUpWord(words[i]))
+          {
+
+            foundIllegalWord = true;
+            break;
+          }
+          let wordPosition = wordPositions[i];
+
+          if (this.wordsPlayed.length == 0)
+          {
+            let bFoundCenterTile = false;
+            wordPosition.forEach(word => {
+
+              if (word[0] == 7 && word[1] == 7)
+              {
+                bFoundCenterTile = true;
+              }
+            })
+            if (!bFoundCenterTile){
+              console.log("Did not place in center");
+              foundIllegalWord = true;
+            }
+          }
+          else
+          {
+
+          }
+        }
+      }
     }
     else
     {
-      console.log("all words are legal");
+      foundIllegalWord = true;
     }
+    if (foundIllegalWord)
+    {
+      console.log("wordPositions: " + wordPositions)
+      console.log("Found illegal word");
+      validTurn = false;
+    }
+    else
+    {
+      this.wordsPlayed.push(words);
+      this.wordPositionsPlayed.push(wordPositions);
+
+    }
+    return validTurn;
   }
 
   lookUpWord(word)
   {
-    let firstLetterWordIndex = word[0];
+    let firstLetterWordIndex = word[0].toUpperCase();
     let firstLetterAlphabetIndex = alphabet.indexOf(firstLetterWordIndex);
-    let filePath = '../DictionaryData/' + word[0];
+    let filePath = '../DictionaryData/' + word[0].toUpperCase();
     if (word.length > 1)
     {
-      filePath = path.join(__dirname, 'DictionaryData', word[0], word[1] + '.txt');
+      filePath = path.join(__dirname, 'DictionaryData', word[0].toUpperCase(), word[1].toUpperCase() + '.txt');
 
     }
     else
     {
-      filePath = path.join(__dirname, 'DictionaryData', word[0], word[0] + '.txt');
+      filePath = path.join(__dirname, 'DictionaryData', word[0].toUpperCase(), word[0].toUpperCase() + '.txt');
        //'../DictionaryData/' + word[0] + '/' + word[0] + '.txt';
     }
     var bFoundWord = false;
     //var jsonPath = path.join(__dirname, '..', 'DictionaryData', 'dev', 'foobar.json');
     //var dataString = fs.readFileSync(filePath, 'utf8');
-    const data = fs.readFileSync(filePath, 'utf8');
-
-    if (data.includes(word))
+    //var data = fs.readFileSync(filePath, 'utf8');
+    var lrs = new lineReader(filePath);
+    var data = lrs.toLines();
+    //data = data.replace(" ","p");
+    if (data.includes(word + "\r"))
     {
       bFoundWord = true;
     }
@@ -295,15 +577,15 @@ class Game {
       this.tiles[newPos] = temp;
     }
     //distribute tiles
-    let startingIndex = 0;
+
     Object.keys(this.sockets).forEach(playerID => {
       const socket = this.sockets[playerID];
       const player = this.players[playerID];
-      for (let j = 0 + startingIndex; j - startingIndex < Constants.TILES_PER_PLAYER && j < this.tiles.length; j++)
+      for (let j = 0; j < Constants.TILES_PER_PLAYER; j++)
       {
-        player.tiles.push(new Tile(this.tiles[j].letter,this.tiles[j].value));
+        player.tiles.push(this.tiles.pop());
       }
-      startingIndex += Constants.TILES_PER_PLAYER;
+
 
     });
     this.players[Object.keys(this.sockets)[0]].bMyTurn = true;

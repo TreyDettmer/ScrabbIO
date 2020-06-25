@@ -1,5 +1,0 @@
-gc
-gcb
-gce
-gcmg
-gcse

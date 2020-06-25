@@ -14,7 +14,7 @@ const context = canvas.getContext('2d');
 var bInitalizedCanvas = false;
 var bRegisteredMyTurn = false;
 var bRegisteredNotMyTurn = false;
-var boardspaceSize = (Constants.BOARD.SIZE - Constants.BOARD.BORDER_WIDTH) / 19;
+var boardspaceSize = (Constants.BOARD.SIZE - Constants.BOARD.BORDER_WIDTH) / Constants.BOARD_TILES;
 setCanvasDimensions();
 
 function setCanvasDimensions() {
@@ -47,6 +47,7 @@ function render() {
       {
         actions_div.classList.remove("hidden");
         bRegisteredMyTurn = true;
+        bRegisteredNotMyTurn = false;
       }
       context.fillStyle = "white";
       context.font = '1.5em serif';
@@ -57,6 +58,7 @@ function render() {
       if (!bRegisteredNotMyTurn)
       {
         actions_div.classList.add("hidden");
+        bRegisteredMyTurn = false;
         bRegisteredNotMyTurn = true;
       }
       context.fillStyle = "white";
@@ -70,10 +72,10 @@ function render() {
     {
       let boardSpaces = []
       //initalize canvas
-      for (let row = 0; row < 19; row++)
+      for (let row = 0; row < Constants.BOARD_TILES; row++)
       {
         boardSpaces[row] = []
-        for (let col = 0; col < 19; col++)
+        for (let col = 0; col < Constants.BOARD_TILES; col++)
         {
           let x = canvas.width / 2 - Constants.BOARD.SIZE/2 + Constants.BOARD.BORDER_WIDTH + ((boardspaceSize)  * col);
           let y = canvas.height / 2 - Constants.BOARD.SIZE/2 + Constants.BOARD.BORDER_WIDTH + ((boardspaceSize) * row);
@@ -111,7 +113,7 @@ function render() {
       let spaces = [];
       spaces[0] = boardSpaces;
       spaces[1] = tileRackSpaces;
-      
+
       sendCanvas(spaces);
       bInitalizedCanvas = true;
 
@@ -192,6 +194,10 @@ function RenderBoardSpaces(me,board)
     {
       for (let col = 0; col < me.boardSpaces[0].length; col++)
       {
+        if (row == 7 && col == 7)
+        {
+          context.fillStyle = Constants.BOARD.BOARD_SPACES.CENTER_COLOR;
+        }
         context.fillRect
         (
           me.boardSpaces[row][col].xPosition,
@@ -199,6 +205,10 @@ function RenderBoardSpaces(me,board)
           me.boardSpaces[row][col].width,
           me.boardSpaces[row][col].height
         );
+        if (row == 7 && col == 7)
+        {
+          context.fillStyle = Constants.BOARD.BOARD_SPACES.COLOR;
+        }
 
         if (board.boardSpaces[row][col].bOccupied)
         {
@@ -280,9 +290,9 @@ function CheckForObjectClick(me)
   let bClickedSomething = false;
   if (BoardContains(me.clickPosition))
   {
-    for (let row = 0; row < 19; row++)
+    for (let row = 0; row < Constants.BOARD_TILES; row++)
     {
-      for (let col = 0; col < 19; col++)
+      for (let col = 0; col < Constants.BOARD_TILES; col++)
       {
         let boardSpace = new GameSpace
         (

@@ -1,3 +1,4 @@
 dvandva
 dvandvas
-dvorak
+dvornik
+dvorniks
