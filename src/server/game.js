@@ -16,6 +16,7 @@ class Game {
     this.bullets = [];
     this.tiles = [];
     this.hotBoardSpaces = [];
+    this.hotBoardSpacesLoc = [];
     this.board = null;
     this.playerTurnIndex = 0;
     this.initGame();
@@ -141,6 +142,7 @@ class Game {
           boardSpace.assignTile(tile)
           boardSpace.bOccupied = true;
           this.hotBoardSpaces.push(boardSpace);
+          this.hotBoardSpacesLoc.push([player.selectedObjects[1].rowcol[0],player.selectedObjects[1].rowcol[1]]);
           player.tiles.splice(player.selectedObjects[0].rowcol[0],1);
           player.tileRackSpaces[player.selectedObjects[0].rowcol[0]].bSelected = false;
           player.boardSpaces[player.selectedObjects[1].rowcol[0]][player.selectedObjects[1].rowcol[1]].bSelected = false;
@@ -196,12 +198,57 @@ class Game {
         this.hotBoardSpaces[i].tile = null;
       }
     }
+    this.hotBoardSpacesLoc = [];
     this.hotBoardSpaces = [];
   }
 
+  FilterFunction(el)
+  {
+    return !this.wordPositionsPlayed.includes(el);
+  }
   CheckWords()
   {
-    console.log("Words already played: " + this.wordsPlayed);
+    let bHorizontalWord = false;
+    let bVerticalWord = false;
+    let bValid = false;
+    for (let spaceIndex = 0; spaceIndex < this.hotBoardSpacesLoc.length;spaceIndex++)
+    {
+      console.log(this.hotBoardSpacesLoc[spaceIndex]);
+      if (spaceIndex == 1)
+      {
+        if (this.hotBoardSpacesLoc[spaceIndex][0] == this.hotBoardSpacesLoc[0][0])
+        {
+          bHorizontalWord = true;
+          bVerticalWord = false;
+        }
+        if (this.hotBoardSpacesLoc[spaceIndex][1] == this.hotBoardSpacesLoc[0][1])
+        {
+          bVerticalWord = true;
+          bHorizontalWord = false;
+        }
+      }
+      else if (spaceIndex > 1)
+      {
+        if (this.hotBoardSpacesLoc[spaceIndex][0] != this.hotBoardSpacesLoc[spaceIndex-1][0] && bHorizontalWord)
+        {
+          console.log("Illegal Move! (multiple words played)");
+          return false;
+        }
+        if (this.hotBoardSpacesLoc[spaceIndex][1] != this.hotBoardSpacesLoc[spaceIndex-1][1] && bVerticalWord)
+        {
+          console.log("Illegal Move! (multiple words played)");
+          return false;
+        }
+      }
+      if (spaceIndex > 0)
+      {
+        if (Math.abs(this.hotBoardSpaces[spaceIndex][0] - this.hotBoardSpaces[spaceIndex-1][0]) >= 1 && Math.abs(this.hotBoardSpaces[spaceIndex][1] - this.hotBoardSpaces[spaceIndex-1][1]) >= 1)
+        {
+          console.log("Illegal Move! (multiple words played - not connected even though on same axis)");
+          return false;
+        }
+      }
+    }
     //horizontal pass
     let firstLetterIndex = -1;
     let lastLetterIndex = Constants.BOARD_TILES;
@@ -221,8 +268,8 @@ class Game {
             firstLetterIndex = col;
           }
           currentWord.push(this.board.boardSpaces[row][col].tile.letter);
-          var rowcol = [row,col]
-          currentWordLetterPositions.push(rowcol);
+
+          currentWordLetterPositions.push([row,col]);
 
 
         }
@@ -240,7 +287,7 @@ class Game {
             {
               lastLetterIndex = col-1;
               words.push(currentWord.join(''));
-              wordPositions.push(currentWordLetterPositions);
+              wordPositions.push([...currentWordLetterPositions]);
               currentWordLetterPositions = [];
               currentWord = [];
             }
@@ -266,8 +313,8 @@ class Game {
             firstLetterIndex = row;
           }
           currentWord.push(this.board.boardSpaces[row][col].tile.letter);
-          var rowcol = [row,col]
-          currentWordLetterPositions.push(rowcol);
+
+          currentWordLetterPositions.push([row,col]);
 
 
         }
@@ -285,7 +332,7 @@ class Game {
             {
               lastLetterIndex = row-1;
               words.push(currentWord.join(''));
-              wordPositions.push(currentWordLetterPositions);
+              wordPositions.push([...currentWordLetterPositions]);
               currentWordLetterPositions = [];
               currentWord = [];
             }
@@ -294,7 +341,7 @@ class Game {
         }
       }
     }
-    console.log("Word positions: " + wordPositions)
+
     //check for isolated words (word that isn't attached to another word)
     let foundIsolatedWord = false;
     if (this.wordsPlayed.length > 0)
@@ -328,11 +375,15 @@ class Game {
           for (let oldWordIndex = 0; oldWordIndex < this.wordsPlayed.length;oldWordIndex++)
           {
             let oldWord = this.wordsPlayed[oldWordIndex];
-            console.log("comparing " + _word + " with " + oldWord);
             let oldWordPosition = this.wordPositionsPlayed[oldWordIndex];
-            console.log("OldwordPosition: " + oldWordPosition);
-            console.log("CurrentwordPosition: " + _wordPosition);
-
+            let oldWordPositionString = oldWordPosition.join('').replace(/,/g,"");
+            let newWordPositionString = _wordPosition.join('').replace(/,/g,"");
+            //checks if word is continuation of old word
+            if (newWordPositionString.includes(oldWordPositionString))
+            {
+              foundLetterInOtherWord = true;
+            }
+            //checks if word is attached to old word
             for (let oldWordLetterIndex = 0; oldWordLetterIndex < oldWord.length;oldWordLetterIndex++)
             {
               let oldLetterPosition = oldWordPosition[oldWordLetterIndex];
@@ -352,7 +403,7 @@ class Game {
         {
           //the word is isolated so it is illegal
           foundIsolatedWord = true;
-          console.log(words[wordIndex] + " is isolated and illegal");
+          console.log(words[wordIndex] + " is isolated");
           break;
 
         }
@@ -429,7 +480,7 @@ class Game {
     }
 
 
-    console.log("words: " + words);
+    //console.log("words: " + words);
 
     let foundIllegalWord = false;
     if (foundIsolatedWord || foundIsolatedLetter)
@@ -453,6 +504,11 @@ class Game {
 
           if (this.wordsPlayed.length == 0)
           {
+            if (words.length > 1)
+            {
+              foundIllegalWord = true;
+              console.log("You can't play two words on first turn")
+            }
             let bFoundCenterTile = false;
             wordPosition.forEach(word => {
 
@@ -462,7 +518,7 @@ class Game {
               }
             })
             if (!bFoundCenterTile){
-              console.log("Did not place in center");
+              console.log("You must play over the center space on the first turn");
               foundIllegalWord = true;
             }
           }
@@ -479,14 +535,58 @@ class Game {
     }
     if (foundIllegalWord)
     {
-      console.log("wordPositions: " + wordPositions)
-      console.log("Found illegal word");
+      //console.log("wordPositions: " + wordPositions)
+      console.log("Illegal Move!");
       validTurn = false;
     }
     else
     {
+      // console.log("words before filter: " + words);
+      // let indexesToRemove = []
+      // for (let i = 0; i < words.length;i++)
+      // {
+      //   for (let p = 0; p < this.wordsPlayed.length; p++)
+      //   {
+      //     if (words[i] == this.wordsPlayed[p])
+      //     {
+      //       indexesToRemove.push(i);
+      //     }
+      //   }
+      // }
+      // indexesToRemove.sort(function(a,b){ return b - a; });
+      // for (let indexCounter = indexesToRemove.length-1; indexCounter >= 0; indexCounter--)
+      // {
+      //   words.splice(indexesToRemove[indexCounter],1);
+      //   wordPositions.splice(indexesToRemove[indexCounter],1);
+      // }
+      // // //remove words from previous turns
+      // // wordPositions.filter((el) => this.wordPositionsPlayed.indexOf(el) < 0);
+      // // words.filter((el) => this.wordsPlayed.indexOf(el) < 0 );
+      // console.log("words after filter: " + words);
+
       this.wordsPlayed.push(words);
       this.wordPositionsPlayed.push(wordPositions);
+      let wordsPlayedSoFar = this.wordsPlayed.flat();
+      let newWordsPlayedSoFar = wordsPlayedSoFar.filter((item,index) => wordsPlayedSoFar.indexOf(item) === index);
+      console.log(newWordsPlayedSoFar);
+      // console.log("WordsPlayed Length: " + this.wordsPlayed.length);
+      // console.log("WordPositionsPlayed Length: " + this.wordPositionsPlayed.length);
+      // for (let i = this.wordsPlayed.length - 1; i >=0; i--)
+      // {
+      //   if (this.wordsPlayed.indexOf(this.wordsPlayed[i]) != i)
+      //   {
+      //     console.log(this.wordsPlayed[i] + " is a duplicate so removing")
+      //     this.wordsPlayed.slice(i,1);
+      //     this.wordPositionsPlayed.slice(i,1);
+      //   }
+      // }
+      // console.log("new WordsPlayed Length: " + this.wordsPlayed.length);
+      // console.log("new WordPositionsPlayed Length: " + this.wordPositionsPlayed.length);
+      // console.log("Words played so far: " + this.wordsPlayed);
+      // for (let index = 0; index < this.wordsPlayed.length;index++)
+      // {
+      //   console.log(this.wordsPlayed[index]);
+      // }
 
     }
     return validTurn;
