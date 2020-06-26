@@ -117,6 +117,35 @@ class Game {
 
   }
 
+  cancelMoves(socket)
+  {
+    var player = this.players[socket.id];
+    for (let i = 0; i < player.selectedObjects.length;i++)
+    {
+      let object = player.selectedObjects[i];
+      if ('tileRackSpace' in object)
+      {
+        // let tile = player.tiles[object.rowcol[0]];
+        player.tileRackSpaces[object.rowcol[0]].bSelected = false;
+      }
+      else if ('boardSpace' in object)
+      {
+        player.boardSpaces[object.rowcol[0]][object.rowcol[1]].bSelected = false;
+
+      }
+    }
+    for (let i = 0; i < this.hotBoardSpaces.length; i++)
+    {
+      player.tiles.push(this.hotBoardSpaces[i].tile);
+      this.hotBoardSpaces[i].bOccupied = false;
+      this.hotBoardSpaces[i].tile = null;
+    }
+    player.selectedObjects = [];
+    this.hotBoardSpacesLoc = [];
+    this.hotBoardSpaces = [];
+
+  }
+
 
   confirmMove(socket)
   {
@@ -153,11 +182,20 @@ class Game {
     }
   }
 
+
+
   endTurn(socket)
   {
     var player = this.players[socket.id];
+    if (this.hotBoardSpaces.length == 0)
+    {
+      console.log("Must make a move");
+      this.cancelMoves(socket);
+      return;
+    }
     //check if valid moves were made
-    if (this.CheckWords())
+    var _checkWords = this.CheckWords();
+    if (_checkWords[0])
     {
       let tilesNeeded = Constants.TILES_PER_PLAYER - player.tiles.length;
       if (this.tiles.length >= tilesNeeded)
@@ -175,6 +213,7 @@ class Game {
           player.tiles.push(this.tiles.pop());
         }
       }
+      player.score += _checkWords[1];
       if (this.players[Object.keys(this.sockets)[0]].bMyTurn)
       {
         this.players[Object.keys(this.sockets)[0]].bMyTurn = false;
@@ -198,14 +237,13 @@ class Game {
         this.hotBoardSpaces[i].tile = null;
       }
     }
+
     this.hotBoardSpacesLoc = [];
     this.hotBoardSpaces = [];
+    this.cancelMoves(socket); //this may not be neccesary but just to be safe
   }
 
-  FilterFunction(el)
-  {
-    return !this.wordPositionsPlayed.includes(el);
-  }
+
   CheckWords()
   {
     let bHorizontalWord = false;
@@ -213,7 +251,7 @@ class Game {
     let bValid = false;
     for (let spaceIndex = 0; spaceIndex < this.hotBoardSpacesLoc.length;spaceIndex++)
     {
-      console.log(this.hotBoardSpacesLoc[spaceIndex]);
+      //console.log(this.hotBoardSpacesLoc[spaceIndex][0] + "," + this.hotBoardSpacesLoc[spaceIndex][1]);
       if (spaceIndex == 1)
       {
         if (this.hotBoardSpacesLoc[spaceIndex][0] == this.hotBoardSpacesLoc[0][0])
@@ -242,10 +280,63 @@ class Game {
       }
       if (spaceIndex > 0)
       {
-        if (Math.abs(this.hotBoardSpaces[spaceIndex][0] - this.hotBoardSpaces[spaceIndex-1][0]) >= 1 && Math.abs(this.hotBoardSpaces[spaceIndex][1] - this.hotBoardSpaces[spaceIndex-1][1]) >= 1)
+
+
+        if (Math.abs(this.hotBoardSpacesLoc[spaceIndex][0] - this.hotBoardSpacesLoc[spaceIndex-1][0]) >= 2)
         {
-          console.log("Illegal Move! (multiple words played - not connected even though on same axis)");
-          return false;
+
+          if (this.hotBoardSpacesLoc[spaceIndex][0] > this.hotBoardSpacesLoc[spaceIndex-1][0])
+          {
+            for (let row = this.hotBoardSpacesLoc[spaceIndex-1][0]+1; row < this.hotBoardSpacesLoc[spaceIndex][0];row++)
+            {
+              if (!this.board.boardSpaces[row][this.hotBoardSpacesLoc[spaceIndex][1]].bOccupied)
+              {
+                console.log("Illegal Move! (space between letters - row wise)");
+                return false;
+              }
+            }
+          }
+          else
+          {
+            for (let row = this.hotBoardSpacesLoc[spaceIndex][0]+1; row < this.hotBoardSpacesLoc[spaceIndex-1][0];row++)
+            {
+              if (!this.board.boardSpaces[row][this.hotBoardSpacesLoc[spaceIndex][1]].bOccupied)
+              {
+                console.log("Illegal Move! (space between letters - row wise)");
+                return false;
+              }
+            }
+          }
+
+        }
+        else if (Math.abs(this.hotBoardSpacesLoc[spaceIndex][1] - this.hotBoardSpacesLoc[spaceIndex-1][1]) >= 2)
+        {
+          if (this.hotBoardSpacesLoc[spaceIndex][1] > this.hotBoardSpacesLoc[spaceIndex-1][1])
+          {
+            for (let col = this.hotBoardSpacesLoc[spaceIndex-1][1]+1; col < this.hotBoardSpacesLoc[spaceIndex][1];col++)
+            {
+              if (!this.board.boardSpaces[this.hotBoardSpacesLoc[spaceIndex][0]][col].bOccupied)
+              {
+                console.log("Illegal Move! (space between letters - column wise)");
+                return false;
+              }
+            }
+          }
+          else
+          {
+            for (let col = this.hotBoardSpacesLoc[spaceIndex][1]+1; col < this.hotBoardSpacesLoc[spaceIndex-1][1];col++)
+            {
+              if (!this.board.boardSpaces[this.hotBoardSpacesLoc[spaceIndex][0]][col].bOccupied)
+              {
+                console.log("Illegal Move! (space between letters - column wise)");
+                return false;
+              }
+            }
+          }
+
+        }
+        else{
+          //console.log("Valid");
         }
       }
     }
@@ -533,6 +624,7 @@ class Game {
     {
       foundIllegalWord = true;
     }
+    let returnedPoints = 0;
     if (foundIllegalWord)
     {
       //console.log("wordPositions: " + wordPositions)
@@ -563,12 +655,26 @@ class Game {
       // // wordPositions.filter((el) => this.wordPositionsPlayed.indexOf(el) < 0);
       // // words.filter((el) => this.wordsPlayed.indexOf(el) < 0 );
       // console.log("words after filter: " + words);
-
+      let wordsPlayedFlattened = this.wordsPlayed.flat();
+      //let wordsFlattened = words.flat();
+      console.log("Words before filter: " + words)
+      console.log("Words already played before filter: " + wordsPlayedFlattened);
+      for (let i = words.length -1; i>=0; i--)
+      {
+        console.log(words[i]);
+        if (wordsPlayedFlattened.indexOf(words[i]) > -1)
+        {
+          words.splice(i,1);
+          wordPositions.splice(i,1);
+        }
+      }
+      console.log("Words after filter: " + words)
+      returnedPoints = this.calculateScore(words,wordPositions);
       this.wordsPlayed.push(words);
       this.wordPositionsPlayed.push(wordPositions);
-      let wordsPlayedSoFar = this.wordsPlayed.flat();
-      let newWordsPlayedSoFar = wordsPlayedSoFar.filter((item,index) => wordsPlayedSoFar.indexOf(item) === index);
-      console.log(newWordsPlayedSoFar);
+      //let wordsPlayedSoFar = this.wordsPlayed.flat();
+      //let newWordsPlayedSoFar = wordsPlayedSoFar.filter((item,index) => wordsPlayedSoFar.indexOf(item) === index);
+      console.log(this.wordsPlayed.flat());
       // console.log("WordsPlayed Length: " + this.wordsPlayed.length);
       // console.log("WordPositionsPlayed Length: " + this.wordPositionsPlayed.length);
       // for (let i = this.wordsPlayed.length - 1; i >=0; i--)
@@ -589,7 +695,42 @@ class Game {
       // }
 
     }
-    return validTurn;
+    return [validTurn,returnedPoints];
+  }
+  calculateScore(words, wordPositions)
+  {
+    let totalPoints = 0;
+    for (let i = 0; i < words.length;i++)
+    {
+      let bFirstPass = true;
+      let points = 0;
+      // first go over word looking for letter multipliers
+      let word = words[i];
+      let wordPosition = wordPositions[i];
+      for (let index = 0; index < word.length; index++)
+      {
+        let letterPosition = wordPosition[index];
+        if (!this.board.boardSpaces[letterPosition[0]][letterPosition[1]].bUsedLetterMultiply)
+        {
+          let space = this.board.boardSpaces[letterPosition[0]][letterPosition[1]];
+          console.log("adding letter points: " + (space.tile.value * space.letterMultiply))
+          points += (space.tile.value * space.letterMultiply);
+        }
+      }
+      // then go over word looking for word multipliers
+      for (let index = 0; index < word.length; index++)
+      {
+        let letterPosition = wordPosition[index];
+        if (!this.board.boardSpaces[letterPosition[0]][letterPosition[1]].bUsedWordMultiply)
+        {
+          let space = this.board.boardSpaces[letterPosition[0]][letterPosition[1]];
+          console.log("multiplying word points: multiplying by " + space.wordMultiply)
+          points *= space.wordMultiply;
+        }
+      }
+      totalPoints += points;
+    }
+    return totalPoints;
   }
 
   lookUpWord(word)

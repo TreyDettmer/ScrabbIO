@@ -6,7 +6,7 @@ export function updateLobbyboard(data)
   for (let i = 0; i < data.length; i++)
   {
     rows[i+1].innerHTML = `<td>${data[i].username.slice(0,15) || 'Anonymous'}</td><td>${
-    0}</td>`;
+    data[i].score}</td>`;
   }
   if (data.length == 1)
   {

@@ -16,6 +16,8 @@ var bRegisteredMyTurn = false;
 var bRegisteredNotMyTurn = false;
 var boardspaceSize = (Constants.BOARD.SIZE - Constants.BOARD.BORDER_WIDTH) / Constants.BOARD_TILES;
 setCanvasDimensions();
+var myScore = 0;
+
 
 function setCanvasDimensions() {
   // On small screens (e.g. phones), we want to "zoom out" so players can still see at least
@@ -41,6 +43,7 @@ function render() {
   renderBackground();
   if (board)
   {
+
     if (me.bMyTurn)
     {
       if (!bRegisteredMyTurn)
@@ -194,9 +197,22 @@ function RenderBoardSpaces(me,board)
     {
       for (let col = 0; col < me.boardSpaces[0].length; col++)
       {
-        if (row == 7 && col == 7)
+
+        if (Constants.BOARD_LAYOUT[row][col] == 1)
         {
-          context.fillStyle = Constants.BOARD.BOARD_SPACES.CENTER_COLOR;
+          context.fillStyle = Constants.BOARD.BOARD_SPACES.TRIPLE_WORD_COLOR;
+        }
+        else if (Constants.BOARD_LAYOUT[row][col] == 2)
+        {
+          context.fillStyle = Constants.BOARD.BOARD_SPACES.DOUBLE_LETTER_COLOR;
+        }
+        else if (Constants.BOARD_LAYOUT[row][col] == 3)
+        {
+          context.fillStyle = Constants.BOARD.BOARD_SPACES.TRIPLE_LETTER_COLOR;
+        }
+        else if (Constants.BOARD_LAYOUT[row][col] == 4)
+        {
+          context.fillStyle = Constants.BOARD.BOARD_SPACES.DOUBLE_WORD_COLOR;
         }
         context.fillRect
         (
@@ -205,10 +221,8 @@ function RenderBoardSpaces(me,board)
           me.boardSpaces[row][col].width,
           me.boardSpaces[row][col].height
         );
-        if (row == 7 && col == 7)
-        {
-          context.fillStyle = Constants.BOARD.BOARD_SPACES.COLOR;
-        }
+        context.fillStyle = Constants.BOARD.BOARD_SPACES.COLOR;
+
 
         if (board.boardSpaces[row][col].bOccupied)
         {

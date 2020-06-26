@@ -1,4 +1,4 @@
-import { connect, play, endTurn } from './networking';
+import { connect, play, endTurn, cancelMoves } from './networking';
 import { startRendering, ConfirmedAction} from './render';
 import { initState } from './state';
 import { startCapturingInput, stopCapturingInput } from './input';
@@ -11,6 +11,7 @@ const usernameInput = document.getElementById('username-input');
 const actionsDiv = document.getElementById('actions-div');
 const confirmActionButton = document.getElementById('confirm-action-button');
 const endTurnButton = document.getElementById('end-turn-button');
+const cancelMovesButton = document.getElementById('cancel-moves-button');
 
 
 Promise.all([
@@ -32,6 +33,9 @@ Promise.all([
   };
   endTurnButton.onclick = () => {
     endTurn();
+  }
+  cancelMovesButton.onclick = () => {
+    cancelMoves();
   }
 
 

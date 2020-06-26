@@ -9,6 +9,7 @@ class Player {
     this.boardSpaces = [];
     this.tileRackSpaces = [];
     this.selectedObjects = [];
+    this.score = 0;
 
   }
 
@@ -22,7 +23,8 @@ class Player {
       clickPosition: this.clickPosition,
       boardSpaces: this.boardSpaces,
       tileRackSpaces: this.tileRackSpaces,
-      selectedObjects: this.selectedObjects
+      selectedObjects: this.selectedObjects,
+      score: this.score
     };
   }
 

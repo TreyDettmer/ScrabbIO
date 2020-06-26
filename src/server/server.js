@@ -37,6 +37,7 @@ io.on('connection', socket => {
   socket.on(Constants.MSG_TYPES.INIT_CANVAS,receiveCanvas);
   socket.on(Constants.MSG_TYPES.PLAYER_ACTION.CONFIRM_MOVE,confirmMove);
   socket.on(Constants.MSG_TYPES.PLAYER_ACTION.END_TURN,endTurn);
+  socket.on(Constants.MSG_TYPES.PLAYER_ACTION.CANCEL_MOVES,cancelMoves);
   socket.on('disconnect', onDisconnect);
 });
 
@@ -66,4 +67,8 @@ function confirmMove(){
 
 function endTurn(){
   game.endTurn(this);
+}
+
+function cancelMoves(){
+  game.cancelMoves(this);
 }

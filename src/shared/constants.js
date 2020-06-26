@@ -11,7 +11,8 @@ module.exports = Object.freeze({
     PLAYER_ACTION:
     {
       CONFIRM_MOVE: 'confirm_move',
-      END_TURN: 'end_turn'
+      END_TURN: 'end_turn',
+      CANCEL_MOVES: 'cancel_moves'
     }
   },
   BOARD: {
@@ -22,6 +23,10 @@ module.exports = Object.freeze({
     BOARD_SPACES: {
       COLOR: '#c4baa3',
       CENTER_COLOR: '#deb8c8',
+      DOUBLE_WORD_COLOR: '#deb8c8',
+      DOUBLE_LETTER_COLOR: '#afd6db',
+      TRIPLE_WORD_COLOR: '#e84827',
+      TRIPLE_LETTER_COLOR: '#378bb8',
       PADDING: 0.03,
     },
   },
@@ -29,5 +34,22 @@ module.exports = Object.freeze({
     COLOR: '#e8c884',
     PADDING: 0.01,
   },
-  RACK_WIDTH: .6
+  RACK_WIDTH: .6,
+  BOARD_LAYOUT: [
+    [ 1 , 0 , 0 , 2 , 0 , 0 , 0 , 1 , 0 , 0 , 0 , 2 , 0 , 0 , 1 ],
+    [ 0 , 4 , 0 , 0 , 0 , 3 , 0 , 0 , 0 , 3 , 0 , 0 , 0 , 4 , 0 ],
+    [ 0 , 0 , 4 , 0 , 0 , 0 , 2 , 0 , 2 , 0 , 0 , 0 , 4 , 0 , 0 ],
+    [ 2 , 0 , 0 , 4 , 0 , 0 , 0 , 2 , 0 , 0 , 0 , 4 , 0 , 0 , 2 ],
+    [ 0 , 0 , 0 , 0 , 4 , 0 , 0 , 0 , 0 , 0 , 4 , 0 , 0 , 0 , 0 ],
+    [ 0 , 3 , 0 , 0 , 0 , 3 , 0 , 0 , 0 , 3 , 0 , 0 , 0 , 3 , 0 ],
+    [ 0 , 0 , 2 , 0 , 0 , 0 , 2 , 0 , 2 , 0 , 0 , 0 , 2 , 0 , 0 ],
+    [ 1 , 0 , 0 , 2 , 0 , 0 , 0 , 4 , 0 , 0 , 0 , 2 , 0 , 0 , 1 ],
+    [ 0 , 0 , 2 , 0 , 0 , 0 , 2 , 0 , 2 , 0 , 0 , 0 , 2 , 0 , 0 ],
+    [ 0 , 3 , 0 , 0 , 0 , 3 , 0 , 0 , 0 , 3 , 0 , 0 , 0 , 3 , 0 ],
+    [ 0 , 0 , 0 , 0 , 4 , 0 , 0 , 0 , 0 , 0 , 4 , 0 , 0 , 0 , 0 ],
+    [ 2 , 0 , 0 , 4 , 0 , 0 , 0 , 2 , 0 , 0 , 0 , 4 , 0 , 0 , 2 ],
+    [ 0 , 0 , 4 , 0 , 0 , 0 , 2 , 0 , 2 , 0 , 0 , 0 , 4 , 0 , 0 ],
+    [ 0 , 4 , 0 , 0 , 0 , 3 , 0 , 0 , 0 , 3 , 0 , 0 , 0 , 4 , 0 ],
+    [ 1 , 0 , 0 , 2 , 0 , 0 , 0 , 1 , 0 , 0 , 0 , 2 , 0 , 0 , 1 ]
+  ]
 })

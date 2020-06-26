@@ -47,3 +47,7 @@ export const confirmMove = () => {
 export const endTurn = () => {
   socket.emit(Constants.MSG_TYPES.PLAYER_ACTION.END_TURN);
 }
+
+export const cancelMoves = () => {
+  socket.emit(Constants.MSG_TYPES.PLAYER_ACTION.CANCEL_MOVES);
+}
