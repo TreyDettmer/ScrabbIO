@@ -2,11 +2,12 @@ const GameObject = require('./GameObject');
 
 
 class Tile{
-  constructor(letter,value)
+  constructor(letter,value,bWasBlank = false)
   {
     this.letter = letter;
     this.value = value;
     this.bHighlighted = false;
+    this.bWasBlank = bWasBlank;
   }
 
   serializeForUpdate()
@@ -14,7 +15,8 @@ class Tile{
     return {
       letter: this.letter,
       value: this.value,
-      bHighlighted: this.bHighlighted
+      bHighlighted: this.bHighlighted,
+      bWasBlank: this.bWasBlank
     };
   }
 }

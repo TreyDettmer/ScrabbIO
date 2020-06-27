@@ -31,9 +31,16 @@ class Game {
   }
 
   addPlayer(socket, username) {
-    this.sockets[socket.id] = socket;
-    this.players[socket.id] = new Player(socket.id, username);
-    console.log('added player with name: ' + username);
+    if (Object.keys(this.sockets).length < 2)
+    {
+      this.sockets[socket.id] = socket;
+      this.players[socket.id] = new Player(socket.id, username);
+      console.log('added player with name: ' + username);
+    }
+    else
+    {
+      console.log("can't add " + username + " since lobby is full");
+    }
   }
 
   removePlayer(socket) {
@@ -120,20 +127,20 @@ class Game {
   cancelMoves(socket)
   {
     var player = this.players[socket.id];
-    for (let i = 0; i < player.selectedObjects.length;i++)
-    {
-      let object = player.selectedObjects[i];
-      if ('tileRackSpace' in object)
-      {
-        // let tile = player.tiles[object.rowcol[0]];
-        player.tileRackSpaces[object.rowcol[0]].bSelected = false;
-      }
-      else if ('boardSpace' in object)
-      {
-        player.boardSpaces[object.rowcol[0]][object.rowcol[1]].bSelected = false;
 
+
+    for (let i = 0; i < player.tileRackSpaces.length;i++)
+    {
+      player.tileRackSpaces[i].bSelected = false;
+    }
+    for (let row = 0; row < Constants.BOARD_TILES;row++)
+    {
+      for (let col = 0; col < Constants.BOARD_TILES;col++)
+      {
+        player.boardSpaces[row][col].bSelected = false;
       }
     }
+
     for (let i = 0; i < this.hotBoardSpaces.length; i++)
     {
       player.tiles.push(this.hotBoardSpaces[i].tile);
@@ -657,18 +664,18 @@ class Game {
       // console.log("words after filter: " + words);
       let wordsPlayedFlattened = this.wordsPlayed.flat();
       //let wordsFlattened = words.flat();
-      console.log("Words before filter: " + words)
-      console.log("Words already played before filter: " + wordsPlayedFlattened);
+      // console.log("Words before filter: " + words)
+      // console.log("Words already played before filter: " + wordsPlayedFlattened);
       for (let i = words.length -1; i>=0; i--)
       {
-        console.log(words[i]);
+
         if (wordsPlayedFlattened.indexOf(words[i]) > -1)
         {
           words.splice(i,1);
           wordPositions.splice(i,1);
         }
       }
-      console.log("Words after filter: " + words)
+      // console.log("Words after filter: " + words)
       returnedPoints = this.calculateScore(words,wordPositions);
       this.wordsPlayed.push(words);
       this.wordPositionsPlayed.push(wordPositions);
@@ -713,8 +720,12 @@ class Game {
         if (!this.board.boardSpaces[letterPosition[0]][letterPosition[1]].bUsedLetterMultiply)
         {
           let space = this.board.boardSpaces[letterPosition[0]][letterPosition[1]];
-          console.log("adding letter points: " + (space.tile.value * space.letterMultiply))
           points += (space.tile.value * space.letterMultiply);
+        }
+        else
+        {
+          let space = this.board.boardSpaces[letterPosition[0]][letterPosition[1]];
+          points += (space.tile.value * 1);
         }
       }
       // then go over word looking for word multipliers
@@ -724,8 +735,13 @@ class Game {
         if (!this.board.boardSpaces[letterPosition[0]][letterPosition[1]].bUsedWordMultiply)
         {
           let space = this.board.boardSpaces[letterPosition[0]][letterPosition[1]];
-          console.log("multiplying word points: multiplying by " + space.wordMultiply)
           points *= space.wordMultiply;
+          space.bUsedWordMultiply = true;
+        }
+        if (!this.board.boardSpaces[letterPosition[0]][letterPosition[1]].bUsedLetterMultiply)
+        {
+          let space = this.board.boardSpaces[letterPosition[0]][letterPosition[1]];
+          space.bUsedLetterMultiply = true;
         }
       }
       totalPoints += points;
@@ -800,7 +816,14 @@ class Game {
     TileData.forEach(tile => {
       for (let i = 0; i < tile.count; i++)
       {
-        this.tiles.push(new Tile(tile.letter,tile.value));
+        if (tile.letter == " ")
+        {
+          this.tiles.push(new Tile(tile.letter,tile.value,true))
+        }
+        else
+        {
+          this.tiles.push(new Tile(tile.letter,tile.value));
+        }
       }
     })
     //this.board.boardSpaces[1][1].assignTile(this.tiles[1]);
@@ -884,7 +907,7 @@ class Game {
   getLobbyboard()
   {
     return Object.values(this.players)
-      .map(p => ({username: p.username, score: Math.round(p.score) }));
+      .map(p => ({username: p.username, score: Math.round(p.score),bMyTurn:p.bMyTurn }));
   }
 
   createUpdate(player, lobbyboard)

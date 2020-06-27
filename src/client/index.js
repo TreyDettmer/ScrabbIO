@@ -1,5 +1,5 @@
 import { connect, play, endTurn, cancelMoves } from './networking';
-import { startRendering, ConfirmedAction} from './render';
+import { startRendering, ConfirmedAction, setBlankTileLetter} from './render';
 import { initState } from './state';
 import { startCapturingInput, stopCapturingInput } from './input';
 import {setLobbyboardHidden} from './lobbyboard';
@@ -12,6 +12,10 @@ const actionsDiv = document.getElementById('actions-div');
 const confirmActionButton = document.getElementById('confirm-action-button');
 const endTurnButton = document.getElementById('end-turn-button');
 const cancelMovesButton = document.getElementById('cancel-moves-button');
+const turnDiv = document.getElementById('turn-div');
+const tileDiv = document.getElementById('blank-tile-div');
+const tileInput = document.getElementById('tile-input');
+const tileButton = document.getElementById('tile-choose-button');
 
 
 Promise.all([
@@ -20,13 +24,24 @@ Promise.all([
   playMenu.classList.remove("hidden");
   usernameInput.focus();
   playButton.onclick = () => {
-    play(usernameInput.value);
-    playMenu.classList.add("hidden");
-    initState();
-    startCapturingInput();
-    startRendering();
-    setLobbyboardHidden(false);
+    if (/\S/.test(usernameInput.value))
+    {
+      play(usernameInput.value);
+      playMenu.classList.add("hidden");
+      turnDiv.classList.remove("hidden");
+      //tileDiv.classList.remove("hidden");
+      initState();
+      startCapturingInput();
+      startRendering();
+      setLobbyboardHidden(false);
+    }
 
+  }
+  tileButton.onclick = () => {
+    if (tileInput.value.length == 1)
+    {
+      setBlankTileLetter(tileInput.value);
+    }
   }
   confirmActionButton.onclick = () => {
     ConfirmedAction();

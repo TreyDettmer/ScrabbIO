@@ -5,19 +5,22 @@ import { MyRect } from './CanvasObjectLocations';
 const GameSpace = require('../server/GameSpace');
 import { sendCanvas, confirmMove } from './networking';
 import { ToggleActionsDiv } from './index';
+import { debounce } from 'throttle-debounce';
 const { MAP_SIZE } = Constants;
 
 // Get the canvas graphics context
 const canvas = document.getElementById('game-canvas');
 const actions_div = document.getElementById('actions-div');
+const tile_div = document.getElementById('blank-tile-div');
 const context = canvas.getContext('2d');
 var bInitalizedCanvas = false;
 var bRegisteredMyTurn = false;
 var bRegisteredNotMyTurn = false;
+var bCheckedForBlank = false;
 var boardspaceSize = (Constants.BOARD.SIZE - Constants.BOARD.BORDER_WIDTH) / Constants.BOARD_TILES;
 setCanvasDimensions();
 var myScore = 0;
-
+var blankTileLetter = " ";
 
 function setCanvasDimensions() {
   // On small screens (e.g. phones), we want to "zoom out" so players can still see at least
@@ -25,9 +28,23 @@ function setCanvasDimensions() {
   const scaleRatio = Math.max(1, 800 / window.innerWidth);
   canvas.width = scaleRatio * window.innerWidth;
   canvas.height = scaleRatio * window.innerHeight;
+  bInitalizedCanvas = false;
 }
 
-//window.addEventListener('resize', debounce(40, setCanvasDimensions));
+window.addEventListener('resize', debounce(40, setCanvasDimensions));
+
+export function setBlankTileLetter(letter)
+{
+  if( letter.toUpperCase() != letter.toLowerCase() ) 
+  {
+    blankTileLetter = letter;
+  }
+  else
+  {
+    console.log("Can't assign " + letter + " to blank tile");
+  }
+
+}
 
 function render() {
   // const { me, others, bullets } = getCurrentState();
@@ -51,22 +68,26 @@ function render() {
         actions_div.classList.remove("hidden");
         bRegisteredMyTurn = true;
         bRegisteredNotMyTurn = false;
+        for (let i = 0; i < me.tiles.length;i++)
+        {
+          if (me.tiles[i].bWasBlank)
+          {
+            tile_div.classList.remove("hidden");
+          }
+        }
       }
-      context.fillStyle = "white";
-      context.font = '1.5em serif';
-      context.fillText("Your Turn",canvas.width / 6, canvas.height / 6);
+
     }
     else
     {
       if (!bRegisteredNotMyTurn)
       {
         actions_div.classList.add("hidden");
+        tile_div.classList.add("hidden");
         bRegisteredMyTurn = false;
         bRegisteredNotMyTurn = true;
       }
-      context.fillStyle = "white";
-      context.font = '1.5em serif';
-      context.fillText("Opponent's Turn",canvas.width / 6, canvas.height / 6);
+
     }
     //render board
     RenderBoard();
@@ -128,14 +149,14 @@ function render() {
       RenderTileRackTiles(me);
       if (me.clickPosition[0] != -1)
       {
-        if (me.bMyTurn)
-          if (CheckForObjectClick(me))
-          {
-            let spaces = [];
-            spaces[0] = me.boardSpaces;
-            spaces[1] = me.tileRackSpaces;
-            sendCanvas(spaces);
-          }
+
+        if (CheckForObjectClick(me))
+        {
+          let spaces = [];
+          spaces[0] = me.boardSpaces;
+          spaces[1] = me.tileRackSpaces;
+          sendCanvas(spaces);
+        }
         //console.log("clicked at: " + me.clickPosition);
       }
       me.clickPosition = [-1,-1];
@@ -264,6 +285,14 @@ function RenderTileRackTiles(me)
           me.tileRackSpaces[i].width,
           me.tileRackSpaces[i].height
         );
+        if (blankTileLetter != " ")
+        {
+          if (me.tiles[i].bWasBlank)
+          {
+            me.tiles[i].letter = blankTileLetter;
+
+          }
+        }
         //draw tile letter
         context.fillStyle = "black";
         context.font = '1.5em serif';
@@ -304,23 +333,25 @@ function CheckForObjectClick(me)
   let bClickedSomething = false;
   if (BoardContains(me.clickPosition))
   {
-    for (let row = 0; row < Constants.BOARD_TILES; row++)
+    if (me.bMyTurn)
     {
-      for (let col = 0; col < Constants.BOARD_TILES; col++)
+      for (let row = 0; row < Constants.BOARD_TILES; row++)
       {
-        let boardSpace = new GameSpace
-        (
-          me.boardSpaces[row][col].xPosition,
-          me.boardSpaces[row][col].yPosition,
-          me.boardSpaces[row][col].width,
-          me.boardSpaces[row][col].height,
-          me.boardSpaces[row][col].bSelected
-        );
-        if (boardSpace.contains(me.clickPosition))
+        for (let col = 0; col < Constants.BOARD_TILES; col++)
         {
-          bClickedSomething = true;
-          console.log("Clicked on tile at row: " + (row + 1) + " col: " + (col + 1));
-          me.boardSpaces[row][col].bSelected = !me.boardSpaces[row][col].bSelected;
+          let boardSpace = new GameSpace
+          (
+            me.boardSpaces[row][col].xPosition,
+            me.boardSpaces[row][col].yPosition,
+            me.boardSpaces[row][col].width,
+            me.boardSpaces[row][col].height,
+            me.boardSpaces[row][col].bSelected
+          );
+          if (boardSpace.contains(me.clickPosition))
+          {
+            bClickedSomething = true;
+            me.boardSpaces[row][col].bSelected = true;
+          }
         }
       }
     }
@@ -340,8 +371,7 @@ function CheckForObjectClick(me)
       if (tileRackSpace.contains(me.clickPosition))
       {
         bClickedSomething = true;
-        console.log("Clicked on rackTileSpace at index " + i);
-        me.tileRackSpaces[i].bSelected = !me.tileRackSpaces[i].bSelected;
+        me.tileRackSpaces[i].bSelected = true;
 
       }
     }
@@ -381,16 +411,8 @@ export function ConfirmedAction()
 }
 
 
-//let renderInterval = setInterval(renderMainMenu, 1000 / 60);
 
-// Replaces main menu rendering with game rendering.
 export function startRendering() {
   //clearInterval(renderInterval);
   var renderInterval = setInterval(render, 1000 / 60);
 }
-
-// // Replaces game rendering with main menu rendering.
-// export function stopRendering() {
-//   clearInterval(renderInterval);
-//   renderInterval = setInterval(renderMainMenu, 1000 / 60);
-// }

@@ -1,4 +1,22 @@
+:root {
+  /* --ff-primary: 'Open Sans', sans-serif;
+  --ff-secondary: 'Source Code Pro', monospace; */
 
+  --fw-reg: 400;
+  --fw-bold: 600;
+
+  --clr-light: #fff;
+  --clr-dark: #303030;
+  --clr-accent: #e38c00;
+
+  --fs-h1: 3rem;
+  --fs-h2: 2.25rem;
+  --fs-h3: 1.25rem;
+  --fs-body: 1rem;
+
+  --bs: 0.25em 0.25em 0.75em rgba(0,0,0,0.25),
+        0.125em 0.125em 0.25em rgba(0,0,0,0.15);
+}
 
 #game-canvas {
   width: 100%;
@@ -27,9 +45,31 @@
   position: fixed;
   top: 10px;
   left: 10px;
-  background-color: rgba(255, 255, 255, 0.5);
-  padding: 10px;
-  border-radius: 5px;
+  background-color: rgba(255, 255, 255, 1);
+  border-collapse: collapse;
+  border: 1px solid black;
+
+}
+
+#lobbyboard th {
+  padding:10px;
+  background-color: red;
+  color:white;
+  border-collapse: collapse;
+  border: 1px solid black;
+}
+#lobbyboard td {
+  border-right: 1px solid black;
+  border-bottom: 1px solid black;
+}
+
+#turn-div {
+  position: fixed;
+  top: 110px;
+  left: 10px;
+  font-size: var(--fs-h3);
+  color: white;
+  text-align: left;
 }
 
 #actions-div {
@@ -42,4 +82,18 @@
   align-items: center;
   padding: 10px;
   border-radius: 5px;
+}
+
+#blank-tile-div {
+  position: fixed;
+  top: 50%;
+  right: 10%;
+  transform: translateY(-50%);
+  background-color: white;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  border-radius: 5px;
+  padding: 10px;
+  text-align: center;
 }
