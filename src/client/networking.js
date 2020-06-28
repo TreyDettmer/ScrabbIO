@@ -40,8 +40,8 @@ export const sendCanvas = spaces => {
   socket.emit(Constants.MSG_TYPES.INIT_CANVAS,spaces);
 }
 
-export const confirmMove = () => {
-  socket.emit(Constants.MSG_TYPES.PLAYER_ACTION.CONFIRM_MOVE);
+export const confirmMove = blankLetter => {
+  socket.emit(Constants.MSG_TYPES.PLAYER_ACTION.CONFIRM_MOVE,blankLetter);
 }
 
 export const endTurn = () => {
@@ -50,4 +50,8 @@ export const endTurn = () => {
 
 export const cancelMoves = () => {
   socket.emit(Constants.MSG_TYPES.PLAYER_ACTION.CANCEL_MOVES);
+}
+
+export const SendExchangedTiles = letters => {
+  socket.emit(Constants.MSG_TYPES.PLAYER_ACTION.EXCHANGE_TILES,letters);
 }

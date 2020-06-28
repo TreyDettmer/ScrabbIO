@@ -1,5 +1,5 @@
 import { connect, play, endTurn, cancelMoves } from './networking';
-import { startRendering, ConfirmedAction, setBlankTileLetter} from './render';
+import { startRendering, ConfirmedAction, setBlankTileLetter, exchangeTiles} from './render';
 import { initState } from './state';
 import { startCapturingInput, stopCapturingInput } from './input';
 import {setLobbyboardHidden} from './lobbyboard';
@@ -16,6 +16,11 @@ const turnDiv = document.getElementById('turn-div');
 const tileDiv = document.getElementById('blank-tile-div');
 const tileInput = document.getElementById('tile-input');
 const tileButton = document.getElementById('tile-choose-button');
+const tileExchangeDiv = document.getElementById('exchange-tiles-div');
+const tileExchangeInput = document.getElementById('exchange-tiles-input');
+const tileExchangeButton = document.getElementById('exchange-tiles-button');
+const gameFeed = document.getElementById('game-feed');
+
 
 
 Promise.all([
@@ -29,6 +34,7 @@ Promise.all([
       play(usernameInput.value);
       playMenu.classList.add("hidden");
       turnDiv.classList.remove("hidden");
+      gameFeed.classList.remove("hidden");
       //tileDiv.classList.remove("hidden");
       initState();
       startCapturingInput();
@@ -41,6 +47,13 @@ Promise.all([
     if (tileInput.value.length == 1)
     {
       setBlankTileLetter(tileInput.value);
+    }
+  }
+
+  tileExchangeButton.onclick = () => {
+    if (tileExchangeInput.value.length >= 1)
+    {
+      exchangeTiles(tileExchangeInput.value);
     }
   }
   confirmActionButton.onclick = () => {

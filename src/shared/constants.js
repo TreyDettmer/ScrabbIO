@@ -12,7 +12,8 @@ module.exports = Object.freeze({
     {
       CONFIRM_MOVE: 'confirm_move',
       END_TURN: 'end_turn',
-      CANCEL_MOVES: 'cancel_moves'
+      CANCEL_MOVES: 'cancel_moves',
+      EXCHANGE_TILES: 'exchange_tiles'
     }
   },
   BOARD: {

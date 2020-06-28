@@ -25,6 +25,7 @@ class Game {
     this.lastUpdateTime = Date.now();
     this.bGameStarted = false;
     this.shouldSendUpdate = false;
+    this.feed = [];
 
     setInterval(this.update.bind(this), 1000 / 60);
 
@@ -47,6 +48,93 @@ class Game {
     console.log("removing player");
     delete this.sockets[socket.id];
     delete this.players[socket.id];
+  }
+
+  handleExchangedTiles(socket,letters)
+  {
+    var player = this.players[socket.id];
+    let exchangedTileCount = 0;
+    let exchangedTiles = [];
+    let bLegalExchange = false;
+    for (let i = player.tiles.length -1; i >= 0; i--)
+    {
+      if (letters.includes(player.tiles[i].letter.toLowerCase()))
+      {
+        exchangedTileCount++;
+        letters = letters.replace(player.tiles[i].letter.toLowerCase(),'');
+        let removedTile = player.tiles.splice(i,1);
+        exchangedTiles.push(removedTile[0]);
+        bLegalExchange = true;
+
+      }
+
+    }
+    if (bLegalExchange)
+    {
+      let tilesCouldNotExchange = 0
+      for (let i = 0; i < exchangedTileCount; i++)
+      {
+        if (this.tiles.length > 0)
+        {
+          player.tiles.push(this.tiles.pop());
+        }
+        else
+        {
+          tilesCouldNotExchange++;
+        }
+      }
+      for (let i = 0; i < exchangedTiles.length;i++)
+      {
+        this.tiles.push(exchangedTiles[i]);
+      }
+      for (let i = 0; i < tilesCouldNotExchange; i++)
+      {
+        player.tiles.push(this.tiles.pop());
+      }
+      this.ShuffleTiles();
+
+
+      if (this.feed.length > 3)
+      {
+        this.feed.shift();
+      }
+      this.feed.push(player.username + " exchanged " + exchangedTiles.length + " tiles." );
+
+      //end turn
+      //if player played any tiles then remove them
+      for (let i = 0; i < this.hotBoardSpaces.length; i++)
+      {
+        if (this.hotBoardSpaces[i].tile.bWasBlank)
+        {
+          this.hotBoardSpaces[i].tile.letter = " ";
+        }
+        player.tiles.push(this.hotBoardSpaces[i].tile);
+        this.hotBoardSpaces[i].bOccupied = false;
+        this.hotBoardSpaces[i].tile = null;
+      }
+      this.hotBoardSpacesLoc = [];
+      this.hotBoardSpaces = [];
+      this.cancelMoves(socket); //this may not be neccesary but just to be safe
+
+      //change turn
+      if (this.players[Object.keys(this.sockets)[0]].bMyTurn)
+      {
+        this.players[Object.keys(this.sockets)[0]].bMyTurn = false;
+        this.players[Object.keys(this.sockets)[1]].bMyTurn = true;
+        this.playerTurnIndex = 1;
+      }
+      else
+      {
+        this.players[Object.keys(this.sockets)[0]].bMyTurn = true;
+        this.players[Object.keys(this.sockets)[1]].bMyTurn = false;
+        this.playerTurnIndex = 0;
+      }
+    }
+    else
+    {
+
+    }
+
   }
 
   handleCanvas(socket,spaces)
@@ -83,6 +171,18 @@ class Game {
       }
     }
 
+  }
+
+  ShuffleTiles()
+  {
+    let newPos,temp;
+    for (let i = this.tiles.length -1; i > 0; i--)
+    {
+      newPos = Math.floor(Math.random() * (i+1));
+      temp = this.tiles[i];
+      this.tiles[i] = this.tiles[newPos];
+      this.tiles[newPos] = temp;
+    }
   }
 
   ObjectAlreadySelected(player,bBoardSpace,index = -1)
@@ -143,6 +243,10 @@ class Game {
 
     for (let i = 0; i < this.hotBoardSpaces.length; i++)
     {
+      if (this.hotBoardSpaces[i].tile.bWasBlank)
+      {
+        this.hotBoardSpaces[i].tile.letter = " ";
+      }
       player.tiles.push(this.hotBoardSpaces[i].tile);
       this.hotBoardSpaces[i].bOccupied = false;
       this.hotBoardSpaces[i].tile = null;
@@ -154,7 +258,7 @@ class Game {
   }
 
 
-  confirmMove(socket)
+  confirmMove(socket,blankLetter)
   {
     var player = this.players[socket.id];
     if (player.selectedObjects.length == 2)
@@ -175,6 +279,21 @@ class Game {
             return;
           }
           //console.log("BoardSpace chosen: " + boardSpace);
+          if (tile.bWasBlank)
+          {
+            if (blankLetter != ' ')
+            {
+              tile.letter = blankLetter.toLowerCase();
+            }
+            else
+            {
+              player.tileRackSpaces[player.selectedObjects[0].rowcol[0]].bSelected = false;
+              player.boardSpaces[player.selectedObjects[1].rowcol[0]][player.selectedObjects[1].rowcol[1]].bSelected = false;
+              player.selectedObjects = [];
+              console.log("assign a letter to the blank tile");
+              return;
+            }
+          }
           boardSpace.assignTile(tile)
           boardSpace.bOccupied = true;
           this.hotBoardSpaces.push(boardSpace);
@@ -220,6 +339,11 @@ class Game {
           player.tiles.push(this.tiles.pop());
         }
       }
+      if (this.feed.length > 3)
+      {
+        this.feed.shift();
+      }
+      this.feed.push(player.username + " played [" + _checkWords[2] + "] for " + _checkWords[1] + " points" );
       player.score += _checkWords[1];
       if (this.players[Object.keys(this.sockets)[0]].bMyTurn)
       {
@@ -239,6 +363,10 @@ class Game {
     {
       for (let i = 0; i < this.hotBoardSpaces.length; i++)
       {
+        if (this.hotBoardSpaces[i].tile.bWasBlank)
+        {
+          this.hotBoardSpaces[i].tile.letter = " ";
+        }
         player.tiles.push(this.hotBoardSpaces[i].tile);
         this.hotBoardSpaces[i].bOccupied = false;
         this.hotBoardSpaces[i].tile = null;
@@ -632,6 +760,7 @@ class Game {
       foundIllegalWord = true;
     }
     let returnedPoints = 0;
+    let wordsPlayed = []
     if (foundIllegalWord)
     {
       //console.log("wordPositions: " + wordPositions)
@@ -677,6 +806,7 @@ class Game {
       }
       // console.log("Words after filter: " + words)
       returnedPoints = this.calculateScore(words,wordPositions);
+      wordsPlayed.push(words);
       this.wordsPlayed.push(words);
       this.wordPositionsPlayed.push(wordPositions);
       //let wordsPlayedSoFar = this.wordsPlayed.flat();
@@ -702,7 +832,7 @@ class Game {
       // }
 
     }
-    return [validTurn,returnedPoints];
+    return [validTurn,returnedPoints,wordsPlayed];
   }
   calculateScore(words, wordPositions)
   {
@@ -736,15 +866,26 @@ class Game {
         {
           let space = this.board.boardSpaces[letterPosition[0]][letterPosition[1]];
           points *= space.wordMultiply;
-          space.bUsedWordMultiply = true;
         }
-        if (!this.board.boardSpaces[letterPosition[0]][letterPosition[1]].bUsedLetterMultiply)
-        {
-          let space = this.board.boardSpaces[letterPosition[0]][letterPosition[1]];
-          space.bUsedLetterMultiply = true;
-        }
+
       }
       totalPoints += points;
+    }
+    // mark that all multipliers have been used
+    for (let i = 0; i < words.length;i++)
+    {
+      let word = words[i];
+      let wordPosition = wordPositions[i];
+      for (let index = 0; index < word.length; index++)
+      {
+        let letterPosition = wordPosition[index];
+
+        let space = this.board.boardSpaces[letterPosition[0]][letterPosition[1]];
+
+        space.bUsedWordMultiply = true;
+        space.bUsedLetterMultiply = true;
+
+      }
     }
     return totalPoints;
   }
@@ -832,14 +973,7 @@ class Game {
   startGame()
   {
     //shuffle tiles;
-    let newPos,temp;
-    for (let i = this.tiles.length -1; i > 0; i--)
-    {
-      newPos = Math.floor(Math.random() * (i+1));
-      temp = this.tiles[i];
-      this.tiles[i] = this.tiles[newPos];
-      this.tiles[newPos] = temp;
-    }
+    this.ShuffleTiles();
     //distribute tiles
 
     Object.keys(this.sockets).forEach(playerID => {
@@ -906,8 +1040,9 @@ class Game {
 
   getLobbyboard()
   {
+    var gameFeed = this.feed;
     return Object.values(this.players)
-      .map(p => ({username: p.username, score: Math.round(p.score),bMyTurn:p.bMyTurn }));
+      .map(p => ({username: p.username, score: Math.round(p.score),bMyTurn:p.bMyTurn,feed:gameFeed }));
   }
 
   createUpdate(player, lobbyboard)

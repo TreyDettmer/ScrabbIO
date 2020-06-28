@@ -3,7 +3,7 @@ const Constants = require('../shared/constants');
 import { getCurrentState } from './state';
 import { MyRect } from './CanvasObjectLocations';
 const GameSpace = require('../server/GameSpace');
-import { sendCanvas, confirmMove } from './networking';
+import { sendCanvas, confirmMove, SendExchangedTiles } from './networking';
 import { ToggleActionsDiv } from './index';
 import { debounce } from 'throttle-debounce';
 const { MAP_SIZE } = Constants;
@@ -12,6 +12,8 @@ const { MAP_SIZE } = Constants;
 const canvas = document.getElementById('game-canvas');
 const actions_div = document.getElementById('actions-div');
 const tile_div = document.getElementById('blank-tile-div');
+const exchange_div = document.getElementById('exchange-tiles-div');
+const exchange_input = document.getElementById('exchange-tiles-input');
 const context = canvas.getContext('2d');
 var bInitalizedCanvas = false;
 var bRegisteredMyTurn = false;
@@ -35,13 +37,22 @@ window.addEventListener('resize', debounce(40, setCanvasDimensions));
 
 export function setBlankTileLetter(letter)
 {
-  if( letter.toUpperCase() != letter.toLowerCase() ) 
+  if( letter.toUpperCase() != letter.toLowerCase() )
   {
     blankTileLetter = letter;
   }
   else
   {
     console.log("Can't assign " + letter + " to blank tile");
+  }
+
+}
+
+export function exchangeTiles(letters)
+{
+  if (/^[a-z]+$/i.test(letters))
+  {
+    SendExchangedTiles(letters.toLowerCase());
   }
 
 }
@@ -66,6 +77,8 @@ function render() {
       if (!bRegisteredMyTurn)
       {
         actions_div.classList.remove("hidden");
+        exchange_input.value = "";
+        exchange_div.classList.remove("hidden");
         bRegisteredMyTurn = true;
         bRegisteredNotMyTurn = false;
         for (let i = 0; i < me.tiles.length;i++)
@@ -84,6 +97,8 @@ function render() {
       {
         actions_div.classList.add("hidden");
         tile_div.classList.add("hidden");
+        exchange_div.classList.add("hidden");
+
         bRegisteredMyTurn = false;
         bRegisteredNotMyTurn = true;
       }
@@ -137,7 +152,7 @@ function render() {
       let spaces = [];
       spaces[0] = boardSpaces;
       spaces[1] = tileRackSpaces;
-
+      spaces[2] = blankTileLetter;
       sendCanvas(spaces);
       bInitalizedCanvas = true;
 
@@ -154,7 +169,8 @@ function render() {
         {
           let spaces = [];
           spaces[0] = me.boardSpaces;
-          spaces[1] = me.tileRackSpaces;
+          spaces[1] = me.tileRackSpaces
+          spaces[2] = blankTileLetter;
           sendCanvas(spaces);
         }
         //console.log("clicked at: " + me.clickPosition);
@@ -253,7 +269,7 @@ function RenderBoardSpaces(me,board)
         // if board space is highlighted
         if (me.boardSpaces[row][col].bSelected)
         {
-          context.strokeStyle = "white";
+          context.strokeStyle = "black";
           context.strokeRect
           (
             me.boardSpaces[row][col].xPosition,
@@ -285,14 +301,7 @@ function RenderTileRackTiles(me)
           me.tileRackSpaces[i].width,
           me.tileRackSpaces[i].height
         );
-        if (blankTileLetter != " ")
-        {
-          if (me.tiles[i].bWasBlank)
-          {
-            me.tiles[i].letter = blankTileLetter;
 
-          }
-        }
         //draw tile letter
         context.fillStyle = "black";
         context.font = '1.5em serif';
@@ -309,7 +318,7 @@ function RenderTileRackTiles(me)
         // if tile is highlighted
         if (me.tileRackSpaces[i].bSelected)
         {
-          context.strokeStyle = "white";
+          context.strokeStyle = "black";
           context.strokeRect
           (
             me.tileRackSpaces[i].xPosition,
@@ -407,7 +416,7 @@ function renderBackground() {
 export function ConfirmedAction()
 {
 
-  confirmMove();
+  confirmMove(blankTileLetter);
 }
 
 

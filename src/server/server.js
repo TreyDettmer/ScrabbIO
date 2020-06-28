@@ -38,6 +38,7 @@ io.on('connection', socket => {
   socket.on(Constants.MSG_TYPES.PLAYER_ACTION.CONFIRM_MOVE,confirmMove);
   socket.on(Constants.MSG_TYPES.PLAYER_ACTION.END_TURN,endTurn);
   socket.on(Constants.MSG_TYPES.PLAYER_ACTION.CANCEL_MOVES,cancelMoves);
+  socket.on(Constants.MSG_TYPES.PLAYER_ACTION.EXCHANGE_TILES,sendExchangedTiles)
   socket.on('disconnect', onDisconnect);
 });
 
@@ -61,8 +62,13 @@ function receiveCanvas(spaces){
   game.handleCanvas(this,spaces);
 }
 
-function confirmMove(){
-  game.confirmMove(this);
+function confirmMove(blankLetter){
+  game.confirmMove(this,blankLetter);
+}
+
+function sendExchangedTiles(letters)
+{
+  game.handleExchangedTiles(this,letters);
 }
 
 function endTurn(){
