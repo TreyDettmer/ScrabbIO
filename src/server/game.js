@@ -13,19 +13,19 @@ class Game {
   constructor() {
     this.sockets = {};
     this.players = {};
-    this.bullets = [];
     this.tiles = [];
     this.hotBoardSpaces = [];
     this.hotBoardSpacesLoc = [];
     this.board = null;
     this.playerTurnIndex = 0;
-    this.initGame();
     this.wordsPlayed = [];
     this.wordPositionsPlayed = [];
     this.lastUpdateTime = Date.now();
     this.bGameStarted = false;
-    this.shouldSendUpdate = false;
+    this.bShouldSendUpdate = false;
+    this.bGameEnded = false;
     this.feed = [];
+
 
     setInterval(this.update.bind(this), 1000 / 60);
 
@@ -36,110 +36,133 @@ class Game {
     {
       this.sockets[socket.id] = socket;
       this.players[socket.id] = new Player(socket.id, username);
-      console.log('added player with name: ' + username);
+      //console.log('added player with name: ' + username);
     }
-    else
-    {
-      console.log("can't add " + username + " since lobby is full");
-    }
+
   }
 
   removePlayer(socket) {
-    console.log("removing player");
     delete this.sockets[socket.id];
     delete this.players[socket.id];
+    if (Object.keys(this.sockets).length < 2)
+    {
+      this.ResetGame();
+    }
+
+  }
+
+  ResetGame()
+  {
+    this.bGameStarted = false;
+    Object.keys(this.sockets).forEach(playerID => {
+
+      var player = this.players[playerID];
+      player.tiles = []
+      player.bMyTurn = false;
+      player.score = 0;
+      player.clickPosition = [-1,-1];
+      player.boardSpaces = [];
+      player.tileRackSpaces = [];
+      player.selectedObjects = [];
+    })
+    this.tiles = [];
+    this.board = null;
+    this.hotBoardSpaces = [];
+    this.hotBoardSpacesLoc = [];
+    this.playerTurnIndex = 0;
+    this.wordsPlayed = [];
+    this.wordPositionsPlayed = [];
+    this.feed = [];
+
   }
 
   handleExchangedTiles(socket,letters)
   {
-    var player = this.players[socket.id];
-    let exchangedTileCount = 0;
-    let exchangedTiles = [];
-    let bLegalExchange = false;
-    for (let i = player.tiles.length -1; i >= 0; i--)
+    if (this.tiles.length >= 7)
     {
-      if (letters.includes(player.tiles[i].letter.toLowerCase()))
+      var player = this.players[socket.id];
+      let exchangedTileCount = 0;
+      let exchangedTiles = [];
+      let bLegalExchange = false;
+      for (let i = player.tiles.length -1; i >= 0; i--)
       {
-        exchangedTileCount++;
-        letters = letters.replace(player.tiles[i].letter.toLowerCase(),'');
-        let removedTile = player.tiles.splice(i,1);
-        exchangedTiles.push(removedTile[0]);
-        bLegalExchange = true;
+        if (letters.includes(player.tiles[i].letter.toLowerCase()))
+        {
+          exchangedTileCount++;
+          letters = letters.replace(player.tiles[i].letter.toLowerCase(),'');
+          let removedTile = player.tiles.splice(i,1);
+          exchangedTiles.push(removedTile[0]);
+          bLegalExchange = true;
+
+        }
 
       }
-
-    }
-    if (bLegalExchange)
-    {
-      let tilesCouldNotExchange = 0
-      for (let i = 0; i < exchangedTileCount; i++)
+      if (bLegalExchange)
       {
-        if (this.tiles.length > 0)
+
+        for (let i = 0; i < exchangedTileCount; i++)
         {
+
           player.tiles.push(this.tiles.pop());
+
+
+        }
+        for (let i = 0; i < exchangedTiles.length;i++)
+        {
+          this.tiles.push(exchangedTiles[i]);
+        }
+
+        this.ShuffleTiles();
+
+
+        if (this.feed.length > 3)
+        {
+          this.feed.shift();
+        }
+        this.feed.push(player.username + " exchanged " + exchangedTiles.length + " tiles." );
+
+        //end turn
+        //if player played any tiles then remove them
+        for (let i = 0; i < this.hotBoardSpaces.length; i++)
+        {
+          if (this.hotBoardSpaces[i].tile.bWasBlank)
+          {
+            this.hotBoardSpaces[i].tile.letter = " ";
+          }
+          player.tiles.push(this.hotBoardSpaces[i].tile);
+          this.hotBoardSpaces[i].bOccupied = false;
+          this.hotBoardSpaces[i].tile = null;
+        }
+        this.hotBoardSpacesLoc = [];
+        this.hotBoardSpaces = [];
+        this.cancelMoves(socket); //this may not be neccesary but just to be safe
+
+        //change turn
+        if (this.players[Object.keys(this.sockets)[0]].bMyTurn)
+        {
+          this.players[Object.keys(this.sockets)[0]].bMyTurn = false;
+          this.players[Object.keys(this.sockets)[1]].bMyTurn = true;
+          this.playerTurnIndex = 1;
         }
         else
         {
-          tilesCouldNotExchange++;
+          this.players[Object.keys(this.sockets)[0]].bMyTurn = true;
+          this.players[Object.keys(this.sockets)[1]].bMyTurn = false;
+          this.playerTurnIndex = 0;
         }
       }
-      for (let i = 0; i < exchangedTiles.length;i++)
-      {
-        this.tiles.push(exchangedTiles[i]);
-      }
-      for (let i = 0; i < tilesCouldNotExchange; i++)
-      {
-        player.tiles.push(this.tiles.pop());
-      }
-      this.ShuffleTiles();
 
-
-      if (this.feed.length > 3)
-      {
-        this.feed.shift();
-      }
-      this.feed.push(player.username + " exchanged " + exchangedTiles.length + " tiles." );
-
-      //end turn
-      //if player played any tiles then remove them
-      for (let i = 0; i < this.hotBoardSpaces.length; i++)
-      {
-        if (this.hotBoardSpaces[i].tile.bWasBlank)
-        {
-          this.hotBoardSpaces[i].tile.letter = " ";
-        }
-        player.tiles.push(this.hotBoardSpaces[i].tile);
-        this.hotBoardSpaces[i].bOccupied = false;
-        this.hotBoardSpaces[i].tile = null;
-      }
-      this.hotBoardSpacesLoc = [];
-      this.hotBoardSpaces = [];
-      this.cancelMoves(socket); //this may not be neccesary but just to be safe
-
-      //change turn
-      if (this.players[Object.keys(this.sockets)[0]].bMyTurn)
-      {
-        this.players[Object.keys(this.sockets)[0]].bMyTurn = false;
-        this.players[Object.keys(this.sockets)[1]].bMyTurn = true;
-        this.playerTurnIndex = 1;
-      }
-      else
-      {
-        this.players[Object.keys(this.sockets)[0]].bMyTurn = true;
-        this.players[Object.keys(this.sockets)[1]].bMyTurn = false;
-        this.playerTurnIndex = 0;
-      }
     }
     else
     {
-
+      //console.log("can't exchange because there are less than 7 tiles left");
     }
 
   }
 
   handleCanvas(socket,spaces)
   {
-    //console.log(this.players[socket.id].selectedObjects);
+
     for (let row = 0; row < Constants.BOARD_TILES; row++)
     {
       this.players[socket.id].boardSpaces[row] = []
@@ -275,7 +298,7 @@ class Game {
             player.tileRackSpaces[player.selectedObjects[0].rowcol[0]].bSelected = false;
             player.boardSpaces[player.selectedObjects[1].rowcol[0]][player.selectedObjects[1].rowcol[1]].bSelected = false;
             player.selectedObjects = [];
-            console.log("can't put there");
+            //console.log("can't put there");
             return;
           }
           //console.log("BoardSpace chosen: " + boardSpace);
@@ -290,7 +313,7 @@ class Game {
               player.tileRackSpaces[player.selectedObjects[0].rowcol[0]].bSelected = false;
               player.boardSpaces[player.selectedObjects[1].rowcol[0]][player.selectedObjects[1].rowcol[1]].bSelected = false;
               player.selectedObjects = [];
-              console.log("assign a letter to the blank tile");
+              //console.log("assign a letter to the blank tile");
               return;
             }
           }
@@ -315,7 +338,24 @@ class Game {
     var player = this.players[socket.id];
     if (this.hotBoardSpaces.length == 0)
     {
-      console.log("Must make a move");
+      if (this.feed.length > 3)
+      {
+        this.feed.shift();
+      }
+      this.feed.push(player.username + " passed." );
+
+      if (this.players[Object.keys(this.sockets)[0]].bMyTurn)
+      {
+        this.players[Object.keys(this.sockets)[0]].bMyTurn = false;
+        this.players[Object.keys(this.sockets)[1]].bMyTurn = true;
+        this.playerTurnIndex = 1;
+      }
+      else
+      {
+        this.players[Object.keys(this.sockets)[0]].bMyTurn = true;
+        this.players[Object.keys(this.sockets)[1]].bMyTurn = false;
+        this.playerTurnIndex = 0;
+      }
       this.cancelMoves(socket);
       return;
     }
@@ -404,12 +444,12 @@ class Game {
       {
         if (this.hotBoardSpacesLoc[spaceIndex][0] != this.hotBoardSpacesLoc[spaceIndex-1][0] && bHorizontalWord)
         {
-          console.log("Illegal Move! (multiple words played)");
+          //console.log("Illegal Move! (multiple words played)");
           return false;
         }
         if (this.hotBoardSpacesLoc[spaceIndex][1] != this.hotBoardSpacesLoc[spaceIndex-1][1] && bVerticalWord)
         {
-          console.log("Illegal Move! (multiple words played)");
+          //console.log("Illegal Move! (multiple words played)");
           return false;
         }
       }
@@ -426,7 +466,7 @@ class Game {
             {
               if (!this.board.boardSpaces[row][this.hotBoardSpacesLoc[spaceIndex][1]].bOccupied)
               {
-                console.log("Illegal Move! (space between letters - row wise)");
+                //console.log("Illegal Move! (space between letters - row wise)");
                 return false;
               }
             }
@@ -437,7 +477,7 @@ class Game {
             {
               if (!this.board.boardSpaces[row][this.hotBoardSpacesLoc[spaceIndex][1]].bOccupied)
               {
-                console.log("Illegal Move! (space between letters - row wise)");
+                //console.log("Illegal Move! (space between letters - row wise)");
                 return false;
               }
             }
@@ -452,7 +492,7 @@ class Game {
             {
               if (!this.board.boardSpaces[this.hotBoardSpacesLoc[spaceIndex][0]][col].bOccupied)
               {
-                console.log("Illegal Move! (space between letters - column wise)");
+                //console.log("Illegal Move! (space between letters - column wise)");
                 return false;
               }
             }
@@ -463,7 +503,7 @@ class Game {
             {
               if (!this.board.boardSpaces[this.hotBoardSpacesLoc[spaceIndex][0]][col].bOccupied)
               {
-                console.log("Illegal Move! (space between letters - column wise)");
+                //console.log("Illegal Move! (space between letters - column wise)");
                 return false;
               }
             }
@@ -629,7 +669,7 @@ class Game {
         {
           //the word is isolated so it is illegal
           foundIsolatedWord = true;
-          console.log(words[wordIndex] + " is isolated");
+          //console.log(words[wordIndex] + " is isolated");
           break;
 
         }
@@ -692,7 +732,7 @@ class Game {
           }
           if (bIsolated)
           {
-            console.log("Found isolated letter");
+            //console.log("Found isolated letter");
             foundIsolatedLetter = true;
             bShouldContinue = false;
             break;
@@ -733,7 +773,7 @@ class Game {
             if (words.length > 1)
             {
               foundIllegalWord = true;
-              console.log("You can't play two words on first turn")
+              //console.log("You can't play two words on first turn")
             }
             let bFoundCenterTile = false;
             wordPosition.forEach(word => {
@@ -744,7 +784,7 @@ class Game {
               }
             })
             if (!bFoundCenterTile){
-              console.log("You must play over the center space on the first turn");
+              //console.log("You must play over the center space on the first turn");
               foundIllegalWord = true;
             }
           }
@@ -764,7 +804,7 @@ class Game {
     if (foundIllegalWord)
     {
       //console.log("wordPositions: " + wordPositions)
-      console.log("Illegal Move!");
+      //console.log("Illegal Move!");
       validTurn = false;
     }
     else
@@ -811,7 +851,7 @@ class Game {
       this.wordPositionsPlayed.push(wordPositions);
       //let wordsPlayedSoFar = this.wordsPlayed.flat();
       //let newWordsPlayedSoFar = wordsPlayedSoFar.filter((item,index) => wordsPlayedSoFar.indexOf(item) === index);
-      console.log(this.wordsPlayed.flat());
+      //console.log(this.wordsPlayed.flat());
       // console.log("WordsPlayed Length: " + this.wordsPlayed.length);
       // console.log("WordPositionsPlayed Length: " + this.wordPositionsPlayed.length);
       // for (let i = this.wordsPlayed.length - 1; i >=0; i--)
@@ -945,12 +985,12 @@ class Game {
       player.tileRackSpaces[tile1Index].bSelected = false;
       player.tileRackSpaces[tile2Index].bSelected = false;
       player.selectedObjects = [];
-      console.log("switched tiles");
+      //console.log("switched tiles");
 
     }
   }
 
-  initGame()
+  CreateTiles()
   {
     this.board = new Board();
     //create all tiles
@@ -972,6 +1012,7 @@ class Game {
 
   startGame()
   {
+    this.CreateTiles();
     //shuffle tiles;
     this.ShuffleTiles();
     //distribute tiles
@@ -991,22 +1032,125 @@ class Game {
 
   }
 
+  EndGame()
+  {
+    Object.keys(this.sockets).forEach(playerID => {
+      const socket = this.sockets[playerID];
+      const player = this.players[playerID];
+      player.bMyTurn = false;
+    })
+    let winningPlayerIndex = -1;
+    let absoluteWinningPlayerIndex = -1;
+    if (this.players[Object.keys(this.sockets)[0]].tiles.length == 0)
+    {
+
+      absoluteWinningPlayerIndex = 0;
+    }
+    else if (this.players[Object.keys(this.sockets)[1]].tiles.length == 0)
+    {
+
+      absoluteWinningPlayerIndex = 1;
+    }
+    let index0ScoreBonus = 0;
+    let index1ScoreBonus = 0;
+    let originalPlayer0Score = this.players[Object.keys(this.sockets)[0]].score;
+    let originalPlayer1Score = this.players[Object.keys(this.sockets)[1]].score;
+    for (let i = 0; i < this.players[Object.keys(this.sockets)[0]].tiles.length;i++)
+    {
+      index0ScoreBonus -= this.players[Object.keys(this.sockets)[0]].tiles[i].value;
+    }
+    for (let i = 0; i < this.players[Object.keys(this.sockets)[1]].tiles.length;i++)
+    {
+      index1ScoreBonus -= this.players[Object.keys(this.sockets)[1]].tiles[i].value;
+    }
+
+    if (absoluteWinningPlayerIndex == 0)
+    {
+      for (let i = 0; i < this.players[Object.keys(this.sockets)[1]].tiles.length;i++)
+      {
+        index0ScoreBonus += this.players[Object.keys(this.sockets)[1]].tiles[i].value;
+      }
+    }
+    else if (absoluteWinningPlayerIndex == 1)
+    {
+      for (let i = 0; i < this.players[Object.keys(this.sockets)[0]].tiles.length;i++)
+      {
+        index1ScoreBonus += this.players[Object.keys(this.sockets)[0]].tiles[i].value;
+      }
+    }
+    this.players[Object.keys(this.sockets)[0]].score += index0ScoreBonus;
+    this.players[Object.keys(this.sockets)[1]].score += index1ScoreBonus;
+    if (this.players[Object.keys(this.sockets)[0]].score > this.players[Object.keys(this.sockets)[1]].score)
+    {
+      this.feed.shift();
+      this.feed.push(this.players[Object.keys(this.sockets)[0]].username + " won!")
+
+    }
+    else if (this.players[Object.keys(this.sockets)[0]].score < this.players[Object.keys(this.sockets)[1]].score)
+    {
+      this.feed.shift();
+      this.feed.push(this.players[Object.keys(this.sockets)[1]].username + " won!")
+    }
+    else //tie
+    {
+      if (originalPlayer0Score > originalPlayer1Score)
+      {
+        this.feed.shift();
+        this.feed.push(this.players[Object.keys(this.sockets)[0]].username + " won (after tiebreaker)!")
+      }
+      else if (originalPlayer0Score < originalPlayer1Score)
+      {
+        this.feed.shift();
+        this.feed.push(this.players[Object.keys(this.sockets)[1]].username + " won (after tiebreaker)!")
+      }
+      else
+      {
+        this.feed.shift();
+        this.feed.push("The game ended in a tie. That is a rare outcome.")
+      }
+    }
+
+
+
+  }
+
   update() {
     // Calculate time elapsed
     const now = Date.now();
     const dt = (now - this.lastUpdateTime) / 1000;
     this.lastUpdateTime = now;
+    if (this.feed.length == 4)
+    {
 
+      let bFoundNonPass = false;
+      for (let i = 0; i < this.feed.length;i++)
+      {
+        if (!this.feed[i].includes('passed'))
+        {
+          bFoundNonPass = true;
+        }
+      }
+      if (!bFoundNonPass)
+      {
+
+        if (this.bGameEnded == false)
+        {
+          //console.log("Game ended because 4 passes in a row.")
+          this.bGameEnded = true;
+          this.EndGame();
+        }
+      }
+    }
 
     // Send a game update to each player every other time
-    if (this.shouldSendUpdate) {
+    if (this.bShouldSendUpdate) {
       if (Object.keys(this.sockets).length > 1)
       {
         if (!this.bGameStarted)
         {
           this.bGameStarted = true;
 
-          console.log("Starting game!");
+          //console.log("Starting game!");
           this.startGame();
         }
 
@@ -1016,7 +1160,7 @@ class Game {
         if (this.bGameStarted)
         {
           this.bGameStarted = false;
-          console.log("Game ending cuz someone quit");
+          //console.log("Game ending cuz someone quit");
         }
       }
       const lobbyboard = this.getLobbyboard();
@@ -1032,17 +1176,17 @@ class Game {
         socket.emit(Constants.MSG_TYPES.GAME_UPDATE,this.createUpdate(player,lobbyboard));
         player.setClickPosition(-1,-1);
       })
-      this.shouldSendUpdate = false;
+      this.bShouldSendUpdate = false;
     } else {
-      this.shouldSendUpdate = true;
+      this.bShouldSendUpdate = true;
     }
   }
 
   getLobbyboard()
   {
-    var gameFeed = this.feed;
+
     return Object.values(this.players)
-      .map(p => ({username: p.username, score: Math.round(p.score),bMyTurn:p.bMyTurn,feed:gameFeed }));
+      .map(p => ({username: p.username, score: Math.round(p.score),bMyTurn:p.bMyTurn,feed:this.feed,tilesLeft:this.tiles.length }));
   }
 
   createUpdate(player, lobbyboard)
@@ -1067,22 +1211,7 @@ class Game {
     }
   }
 
-  // createUpdate(player, leaderboard) {
-  //   const nearbyPlayers = Object.values(this.players).filter(
-  //     p => p !== player && p.distanceTo(player) <= Constants.MAP_SIZE / 2,
-  //   );
-  //   const nearbyBullets = this.bullets.filter(
-  //     b => b.distanceTo(player) <= Constants.MAP_SIZE / 2,
-  //   );
-  //
-  //   return {
-  //     t: Date.now(),
-  //     me: player.serializeForUpdate(),
-  //     others: nearbyPlayers.map(p => p.serializeForUpdate()),
-  //     bullets: nearbyBullets.map(b => b.serializeForUpdate()),
-  //     leaderboard,
-  //   };
-  //}
+
 }
 
 module.exports = Game;

@@ -20,11 +20,14 @@ const tileExchangeDiv = document.getElementById('exchange-tiles-div');
 const tileExchangeInput = document.getElementById('exchange-tiles-input');
 const tileExchangeButton = document.getElementById('exchange-tiles-button');
 const gameFeed = document.getElementById('game-feed');
+const tilesLeftDiv = document.getElementById('tiles-left-div');
+const keyDiv = document.getElementById('key-div');
+const fullLobbyDiv = document.getElementById('full-lobby-div');
 
 
 
 Promise.all([
-  connect(onGameOver),
+  connect(),
 ]).then(() => {
   playMenu.classList.remove("hidden");
   usernameInput.focus();
@@ -35,11 +38,15 @@ Promise.all([
       playMenu.classList.add("hidden");
       turnDiv.classList.remove("hidden");
       gameFeed.classList.remove("hidden");
-      //tileDiv.classList.remove("hidden");
+      tilesLeftDiv.classList.remove("hidden");
+      keyDiv.classList.remove("hidden");
+      fullLobbyDiv.classList.remove("hidden");
       initState();
       startCapturingInput();
       startRendering();
       setLobbyboardHidden(false);
+
+
     }
 
   }
@@ -84,11 +91,4 @@ export function ToggleActionsDiv(hide)
   {
     actionsDiv.classList.remove("hidden");
   }
-}
-
-
-
-function onGameOver() {
-  stopCapturingInput();
-  console.log("GameOver?");
 }

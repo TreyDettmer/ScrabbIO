@@ -14,11 +14,14 @@ const actions_div = document.getElementById('actions-div');
 const tile_div = document.getElementById('blank-tile-div');
 const exchange_div = document.getElementById('exchange-tiles-div');
 const exchange_input = document.getElementById('exchange-tiles-input');
+const lobbyWaitDiv = document.getElementById('lobby-wait-div');
+const fullLobbyDiv = document.getElementById('full-lobby-div');
 const context = canvas.getContext('2d');
 var bInitalizedCanvas = false;
 var bRegisteredMyTurn = false;
 var bRegisteredNotMyTurn = false;
 var bCheckedForBlank = false;
+var bInGame = false;
 var boardspaceSize = (Constants.BOARD.SIZE - Constants.BOARD.BORDER_WIDTH) / Constants.BOARD_TILES;
 setCanvasDimensions();
 var myScore = 0;
@@ -67,11 +70,23 @@ function render() {
   {
     return;
   }
+  else
+  {
+    if (!bInGame)
+    {
+      fullLobbyDiv.classList.add("hidden");
+      bInGame = true;
+    }
+  }
+
   // Draw background
   renderBackground();
   if (board)
   {
-
+    if (!lobbyWaitDiv.classList.contains('hidden'))
+    {
+      lobbyWaitDiv.classList.add('hidden');
+    }
     if (me.bMyTurn)
     {
       if (!bRegisteredMyTurn)
@@ -179,6 +194,19 @@ function render() {
 
 
     }
+  }
+  else
+  {
+    if (lobbyWaitDiv.classList.contains('hidden'))
+    {
+      lobbyWaitDiv.classList.remove('hidden');
+    }
+    actions_div.classList.add("hidden");
+    tile_div.classList.add("hidden");
+    exchange_div.classList.add("hidden");
+    bInitalizedCanvas = false;
+    bRegisteredMyTurn = false;
+    bRegisteredNotMyTurn = false;
   }
 
 
