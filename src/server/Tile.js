@@ -1,6 +1,6 @@
+//tile object has a numerical value and letter
+
 const GameObject = require('./GameObject');
-
-
 class Tile{
   constructor(letter,value,bWasBlank = false)
   {

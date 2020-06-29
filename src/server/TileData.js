@@ -1,3 +1,5 @@
+//this file holds the game's tile data
+
 data = [
   {
     "letter": 'a',

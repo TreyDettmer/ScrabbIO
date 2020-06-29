@@ -1,3 +1,5 @@
+//server creation and handling of client messages to server
+
 const express = require('express');
 const webpack = require('webpack');
 const webpackDevMiddleware = require('webpack-dev-middleware');

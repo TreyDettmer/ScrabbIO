@@ -1,3 +1,5 @@
+//base game object is clickable and has a x,y,width,height
+
 class GameObject {
 
   constructor(xPosition = 0,yPosition = 0,width=1,height=1,bSelected=false)

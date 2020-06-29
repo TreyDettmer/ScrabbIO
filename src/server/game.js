@@ -1,29 +1,35 @@
+//this is the main game class
+
+
 const Constants = require('../shared/constants');
 const Player = require('./player');
 const Board = require('./Board');
 const Tile = require('./Tile');
 const TileData = require('./TileData');
-// const applyCollisions = require('./collisions');
-const fs = require('fs');
 const path = require('path');
 const lineReader = require('line-reader-sync');
 const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
 class Game {
   constructor() {
+
     this.sockets = {};
     this.players = {};
     this.tiles = [];
+    //hot board spaces are spaces that are being affected during a players turn
     this.hotBoardSpaces = [];
+    //location of each hot board space
     this.hotBoardSpacesLoc = [];
     this.board = null;
     this.playerTurnIndex = 0;
     this.wordsPlayed = [];
+    //position of each letter of each word that has been played
     this.wordPositionsPlayed = [];
     this.lastUpdateTime = Date.now();
     this.bGameStarted = false;
     this.bShouldSendUpdate = false;
     this.bGameEnded = false;
+    //the feed of game events
     this.feed = [];
 
 
@@ -31,14 +37,13 @@ class Game {
 
   }
 
+
   addPlayer(socket, username) {
     if (Object.keys(this.sockets).length < 2)
     {
       this.sockets[socket.id] = socket;
       this.players[socket.id] = new Player(socket.id, username);
-      //console.log('added player with name: ' + username);
     }
-
   }
 
   removePlayer(socket) {
@@ -46,16 +51,17 @@ class Game {
     delete this.players[socket.id];
     if (Object.keys(this.sockets).length < 2)
     {
+      //since there are less than two players, stop the game and reset game values
       this.ResetGame();
     }
 
   }
 
+  //prepares the game for a new game to start
   ResetGame()
   {
     this.bGameStarted = false;
     Object.keys(this.sockets).forEach(playerID => {
-
       var player = this.players[playerID];
       player.tiles = []
       player.bMyTurn = false;
@@ -64,7 +70,7 @@ class Game {
       player.boardSpaces = [];
       player.tileRackSpaces = [];
       player.selectedObjects = [];
-    })
+    });
     this.tiles = [];
     this.board = null;
     this.hotBoardSpaces = [];
@@ -73,12 +79,11 @@ class Game {
     this.wordsPlayed = [];
     this.wordPositionsPlayed = [];
     this.feed = [];
-
   }
 
   handleExchangedTiles(socket,letters)
   {
-    if (this.tiles.length >= 7)
+    if (this.tiles.length >= 7) //players can only exchange if there are at least 7 tiles left
     {
       var player = this.players[socket.id];
       let exchangedTileCount = 0;
@@ -121,7 +126,7 @@ class Game {
         }
         this.feed.push(player.username + " exchanged " + exchangedTiles.length + " tiles." );
 
-        //end turn
+
         //if player played any tiles then remove them
         for (let i = 0; i < this.hotBoardSpaces.length; i++)
         {
@@ -151,15 +156,10 @@ class Game {
           this.playerTurnIndex = 0;
         }
       }
-
     }
-    else
-    {
-      //console.log("can't exchange because there are less than 7 tiles left");
-    }
-
   }
 
+  // method is called when player selects a game object
   handleCanvas(socket,spaces)
   {
 
@@ -173,7 +173,6 @@ class Game {
         {
           if (this.ObjectAlreadySelected(this.players[socket.id],true) == false)
           {
-            //console.log("adding boardSpace to selected objects")
             this.players[socket.id].selectedObjects.push({boardSpace: this.players[socket.id].boardSpaces[row][col], rowcol: [row,col]});
           }
         }
@@ -186,7 +185,6 @@ class Game {
       {
         if (this.ObjectAlreadySelected(this.players[socket.id],false,i) == false)
         {
-          // console.log("adding tile to selected objects")
           this.players[socket.id].selectedObjects.push({tileRackSpace:this.players[socket.id].tileRackSpaces[i],rowcol:[i]});
         }
 
@@ -208,6 +206,7 @@ class Game {
     }
   }
 
+  //method checks if player has already selected a given object
   ObjectAlreadySelected(player,bBoardSpace,index = -1)
   {
     if (bBoardSpace)
@@ -247,6 +246,7 @@ class Game {
 
   }
 
+  //method removes any unplayed tiles from the board and clears the player's selections
   cancelMoves(socket)
   {
     var player = this.players[socket.id];
@@ -280,28 +280,27 @@ class Game {
 
   }
 
-
+  //method is called when a player plays a tile to the board
   confirmMove(socket,blankLetter)
   {
     var player = this.players[socket.id];
-    if (player.selectedObjects.length == 2)
+    if (player.selectedObjects.length == 2) // the player must have selected a board space and a tile from their tile rack
     {
       if ('tileRackSpace' in player.selectedObjects[0])
       {
         if ('boardSpace' in player.selectedObjects[1])
         {
           let tile = player.tiles[player.selectedObjects[0].rowcol[0]];
-          //console.log("Tile chosen: " + tile.letter);
           let boardSpace = this.board.boardSpaces[player.selectedObjects[1].rowcol[0]][player.selectedObjects[1].rowcol[1]];
-          if (boardSpace.tile)
+          if (boardSpace.tile) //board space already has tile so can't place new tile there
           {
             player.tileRackSpaces[player.selectedObjects[0].rowcol[0]].bSelected = false;
             player.boardSpaces[player.selectedObjects[1].rowcol[0]][player.selectedObjects[1].rowcol[1]].bSelected = false;
             player.selectedObjects = [];
-            //console.log("can't put there");
             return;
           }
-          //console.log("BoardSpace chosen: " + boardSpace);
+
+          //if the tile played is blank, assign the player's blank tile selection to that tile's letter
           if (tile.bWasBlank)
           {
             if (blankLetter != ' ')
@@ -313,7 +312,6 @@ class Game {
               player.tileRackSpaces[player.selectedObjects[0].rowcol[0]].bSelected = false;
               player.boardSpaces[player.selectedObjects[1].rowcol[0]][player.selectedObjects[1].rowcol[1]].bSelected = false;
               player.selectedObjects = [];
-              //console.log("assign a letter to the blank tile");
               return;
             }
           }
@@ -325,7 +323,6 @@ class Game {
           player.tileRackSpaces[player.selectedObjects[0].rowcol[0]].bSelected = false;
           player.boardSpaces[player.selectedObjects[1].rowcol[0]][player.selectedObjects[1].rowcol[1]].bSelected = false;
           player.selectedObjects = [];
-          //console.log("Played tile");
         }
       }
     }
@@ -338,7 +335,7 @@ class Game {
     var player = this.players[socket.id];
     if (this.hotBoardSpaces.length == 0)
     {
-      if (this.feed.length > 3)
+      if (this.feed.length > 3) // only four messages in the feed at a time
       {
         this.feed.shift();
       }
@@ -361,7 +358,7 @@ class Game {
     }
     //check if valid moves were made
     var _checkWords = this.CheckWords();
-    if (_checkWords[0])
+    if (_checkWords[0]) //if all moves are valid
     {
       let tilesNeeded = Constants.TILES_PER_PLAYER - player.tiles.length;
       if (this.tiles.length >= tilesNeeded)
@@ -418,15 +415,15 @@ class Game {
     this.cancelMoves(socket); //this may not be neccesary but just to be safe
   }
 
-
+  //method checks that if valid moves were made
+  //WARNING: this code is very messy
   CheckWords()
   {
     let bHorizontalWord = false;
     let bVerticalWord = false;
-    let bValid = false;
+    //first: all tiles played must be in the same row or column
     for (let spaceIndex = 0; spaceIndex < this.hotBoardSpacesLoc.length;spaceIndex++)
     {
-      //console.log(this.hotBoardSpacesLoc[spaceIndex][0] + "," + this.hotBoardSpacesLoc[spaceIndex][1]);
       if (spaceIndex == 1)
       {
         if (this.hotBoardSpacesLoc[spaceIndex][0] == this.hotBoardSpacesLoc[0][0])
@@ -444,12 +441,11 @@ class Game {
       {
         if (this.hotBoardSpacesLoc[spaceIndex][0] != this.hotBoardSpacesLoc[spaceIndex-1][0] && bHorizontalWord)
         {
-          //console.log("Illegal Move! (multiple words played)");
+
           return false;
         }
         if (this.hotBoardSpacesLoc[spaceIndex][1] != this.hotBoardSpacesLoc[spaceIndex-1][1] && bVerticalWord)
         {
-          //console.log("Illegal Move! (multiple words played)");
           return false;
         }
       }
@@ -466,7 +462,6 @@ class Game {
             {
               if (!this.board.boardSpaces[row][this.hotBoardSpacesLoc[spaceIndex][1]].bOccupied)
               {
-                //console.log("Illegal Move! (space between letters - row wise)");
                 return false;
               }
             }
@@ -477,7 +472,6 @@ class Game {
             {
               if (!this.board.boardSpaces[row][this.hotBoardSpacesLoc[spaceIndex][1]].bOccupied)
               {
-                //console.log("Illegal Move! (space between letters - row wise)");
                 return false;
               }
             }
@@ -492,7 +486,6 @@ class Game {
             {
               if (!this.board.boardSpaces[this.hotBoardSpacesLoc[spaceIndex][0]][col].bOccupied)
               {
-                //console.log("Illegal Move! (space between letters - column wise)");
                 return false;
               }
             }
@@ -503,7 +496,6 @@ class Game {
             {
               if (!this.board.boardSpaces[this.hotBoardSpacesLoc[spaceIndex][0]][col].bOccupied)
               {
-                //console.log("Illegal Move! (space between letters - column wise)");
                 return false;
               }
             }
@@ -511,11 +503,12 @@ class Game {
 
         }
         else{
-          //console.log("Valid");
+
         }
       }
     }
-    //horizontal pass
+
+    //second: horizontal pass - checks for words in rows
     let firstLetterIndex = -1;
     let lastLetterIndex = Constants.BOARD_TILES;
     let words = []
@@ -563,7 +556,7 @@ class Game {
       }
     }
 
-    //vertical pass
+    //third: vertical pass - checks for words in columns
     firstLetterIndex = -1;
     lastLetterIndex = Constants.BOARD_TILES;
     currentWord = [];
@@ -608,7 +601,7 @@ class Game {
       }
     }
 
-    //check for isolated words (word that isn't attached to another word)
+    //fourth: check for isolated words/letters (word/letter that isn't attached to another word)
     let foundIsolatedWord = false;
     if (this.wordsPlayed.length > 0)
     {
@@ -618,7 +611,7 @@ class Game {
         let _word = words[wordIndex];
         let _wordPosition = wordPositions[wordIndex];
         let foundLetterInOtherWord = false;
-        //iterate through current words on the board
+
         for (let letterIndex = 0; letterIndex < _word.length; letterIndex++)
         {
           let letterPosition = _wordPosition[letterIndex];
@@ -669,13 +662,12 @@ class Game {
         {
           //the word is isolated so it is illegal
           foundIsolatedWord = true;
-          //console.log(words[wordIndex] + " is isolated");
           break;
 
         }
       }
-
     }
+
     let foundIsolatedLetter = false;
     //check for single isolated tiles
     for (let row = 0; row < Constants.BOARD_TILES;row++)
@@ -732,7 +724,6 @@ class Game {
           }
           if (bIsolated)
           {
-            //console.log("Found isolated letter");
             foundIsolatedLetter = true;
             bShouldContinue = false;
             break;
@@ -746,8 +737,6 @@ class Game {
     }
 
 
-    //console.log("words: " + words);
-
     let foundIllegalWord = false;
     if (foundIsolatedWord || foundIsolatedLetter)
     {
@@ -760,37 +749,31 @@ class Game {
         for (let i = 0; i < words.length;i++)
         {
 
-          if (!this.lookUpWord(words[i]))
+          if (!this.lookUpWord(words[i])) //ensure that each word is an actual English word
           {
-
             foundIllegalWord = true;
             break;
           }
-          let wordPosition = wordPositions[i];
 
+          let wordPosition = wordPositions[i];
           if (this.wordsPlayed.length == 0)
           {
-            if (words.length > 1)
+            if (words.length > 1) //can't play more than one word on the first turn of the game
             {
               foundIllegalWord = true;
-              //console.log("You can't play two words on first turn")
             }
+
             let bFoundCenterTile = false;
             wordPosition.forEach(word => {
-
               if (word[0] == 7 && word[1] == 7)
               {
                 bFoundCenterTile = true;
               }
             })
-            if (!bFoundCenterTile){
-              //console.log("You must play over the center space on the first turn");
+            if (!bFoundCenterTile) //the first word must be played over the center board space
+            {
               foundIllegalWord = true;
             }
-          }
-          else
-          {
-
           }
         }
       }
@@ -803,38 +786,12 @@ class Game {
     let wordsPlayed = []
     if (foundIllegalWord)
     {
-      //console.log("wordPositions: " + wordPositions)
-      //console.log("Illegal Move!");
       validTurn = false;
     }
     else
     {
-      // console.log("words before filter: " + words);
-      // let indexesToRemove = []
-      // for (let i = 0; i < words.length;i++)
-      // {
-      //   for (let p = 0; p < this.wordsPlayed.length; p++)
-      //   {
-      //     if (words[i] == this.wordsPlayed[p])
-      //     {
-      //       indexesToRemove.push(i);
-      //     }
-      //   }
-      // }
-      // indexesToRemove.sort(function(a,b){ return b - a; });
-      // for (let indexCounter = indexesToRemove.length-1; indexCounter >= 0; indexCounter--)
-      // {
-      //   words.splice(indexesToRemove[indexCounter],1);
-      //   wordPositions.splice(indexesToRemove[indexCounter],1);
-      // }
-      // // //remove words from previous turns
-      // // wordPositions.filter((el) => this.wordPositionsPlayed.indexOf(el) < 0);
-      // // words.filter((el) => this.wordsPlayed.indexOf(el) < 0 );
-      // console.log("words after filter: " + words);
       let wordsPlayedFlattened = this.wordsPlayed.flat();
-      //let wordsFlattened = words.flat();
-      // console.log("Words before filter: " + words)
-      // console.log("Words already played before filter: " + wordsPlayedFlattened);
+      //for all the words that have been found, ignore the words that have already been played
       for (let i = words.length -1; i>=0; i--)
       {
 
@@ -844,36 +801,14 @@ class Game {
           wordPositions.splice(i,1);
         }
       }
-      // console.log("Words after filter: " + words)
       returnedPoints = this.calculateScore(words,wordPositions);
       wordsPlayed.push(words);
       this.wordsPlayed.push(words);
       this.wordPositionsPlayed.push(wordPositions);
-      //let wordsPlayedSoFar = this.wordsPlayed.flat();
-      //let newWordsPlayedSoFar = wordsPlayedSoFar.filter((item,index) => wordsPlayedSoFar.indexOf(item) === index);
-      //console.log(this.wordsPlayed.flat());
-      // console.log("WordsPlayed Length: " + this.wordsPlayed.length);
-      // console.log("WordPositionsPlayed Length: " + this.wordPositionsPlayed.length);
-      // for (let i = this.wordsPlayed.length - 1; i >=0; i--)
-      // {
-      //   if (this.wordsPlayed.indexOf(this.wordsPlayed[i]) != i)
-      //   {
-      //     console.log(this.wordsPlayed[i] + " is a duplicate so removing")
-      //     this.wordsPlayed.slice(i,1);
-      //     this.wordPositionsPlayed.slice(i,1);
-      //   }
-      // }
-      // console.log("new WordsPlayed Length: " + this.wordsPlayed.length);
-      // console.log("new WordPositionsPlayed Length: " + this.wordPositionsPlayed.length);
-      // console.log("Words played so far: " + this.wordsPlayed);
-      // for (let index = 0; index < this.wordsPlayed.length;index++)
-      // {
-      //   console.log(this.wordsPlayed[index]);
-      // }
-
     }
     return [validTurn,returnedPoints,wordsPlayed];
   }
+
   calculateScore(words, wordPositions)
   {
     let totalPoints = 0;
@@ -930,6 +865,7 @@ class Game {
     return totalPoints;
   }
 
+  //method checks that given word is an English word
   lookUpWord(word)
   {
     let firstLetterWordIndex = word[0].toUpperCase();
@@ -940,38 +876,31 @@ class Game {
       filePath = path.join(__dirname, 'DictionaryData', word[0].toUpperCase(), word[1].toUpperCase() + '.txt');
 
     }
-    else
+    else //this shouldn't ever happen since all words played must be longer than 1 letter
     {
       filePath = path.join(__dirname, 'DictionaryData', word[0].toUpperCase(), word[0].toUpperCase() + '.txt');
-       //'../DictionaryData/' + word[0] + '/' + word[0] + '.txt';
     }
+
+    //parse through the dictionary looking for that word
     var bFoundWord = false;
-    //var jsonPath = path.join(__dirname, '..', 'DictionaryData', 'dev', 'foobar.json');
-    //var dataString = fs.readFileSync(filePath, 'utf8');
-    //var data = fs.readFileSync(filePath, 'utf8');
     var lrs = new lineReader(filePath);
     var data = lrs.toLines();
-    //data = data.replace(" ","p");
     if (data.includes(word + "\r"))
     {
       bFoundWord = true;
     }
-
-
     return bFoundWord;
-
-
-
   }
 
+  //method handles when a player clicks
   handleInput(socket, coord) {
     if (this.players[socket.id])
     {
-      //console.log("handled inpu");
       this.players[socket.id].setClickPosition(coord[0],coord[1]);
     }
   }
 
+  //method switches two tiles in the tile rack of the given player
   switchTiles(player)
   {
     if ('tileRackSpace' in player.selectedObjects[0] && 'tileRackSpace' in player.selectedObjects[1])
@@ -985,15 +914,13 @@ class Game {
       player.tileRackSpaces[tile1Index].bSelected = false;
       player.tileRackSpaces[tile2Index].bSelected = false;
       player.selectedObjects = [];
-      //console.log("switched tiles");
-
     }
   }
 
+  //method creates board and all tiles
   CreateTiles()
   {
     this.board = new Board();
-    //create all tiles
     TileData.forEach(tile => {
       for (let i = 0; i < tile.count; i++)
       {
@@ -1007,7 +934,6 @@ class Game {
         }
       }
     })
-    //this.board.boardSpaces[1][1].assignTile(this.tiles[1]);
   }
 
   startGame()
@@ -1027,11 +953,13 @@ class Game {
 
 
     });
+    //player at index 0 always plays first
     this.players[Object.keys(this.sockets)[0]].bMyTurn = true;
 
 
   }
 
+  //method handles endgame and calculating the winner
   EndGame()
   {
     Object.keys(this.sockets).forEach(playerID => {
@@ -1039,17 +967,17 @@ class Game {
       const player = this.players[playerID];
       player.bMyTurn = false;
     })
+
     let winningPlayerIndex = -1;
-    let absoluteWinningPlayerIndex = -1;
     if (this.players[Object.keys(this.sockets)[0]].tiles.length == 0)
     {
 
-      absoluteWinningPlayerIndex = 0;
+      winningPlayerIndex = 0;
     }
     else if (this.players[Object.keys(this.sockets)[1]].tiles.length == 0)
     {
 
-      absoluteWinningPlayerIndex = 1;
+      winningPlayerIndex = 1;
     }
     let index0ScoreBonus = 0;
     let index1ScoreBonus = 0;
@@ -1064,14 +992,15 @@ class Game {
       index1ScoreBonus -= this.players[Object.keys(this.sockets)[1]].tiles[i].value;
     }
 
-    if (absoluteWinningPlayerIndex == 0)
+    //if a player has 0 tiles left then their opponent's tiles' values get added to their score
+    if (winningPlayerIndex == 0)
     {
       for (let i = 0; i < this.players[Object.keys(this.sockets)[1]].tiles.length;i++)
       {
         index0ScoreBonus += this.players[Object.keys(this.sockets)[1]].tiles[i].value;
       }
     }
-    else if (absoluteWinningPlayerIndex == 1)
+    else if (winningPlayerIndex == 1)
     {
       for (let i = 0; i < this.players[Object.keys(this.sockets)[0]].tiles.length;i++)
       {
@@ -1084,29 +1013,34 @@ class Game {
     {
       this.feed.shift();
       this.feed.push(this.players[Object.keys(this.sockets)[0]].username + " won!")
+      winningPlayerIndex = 0;
 
     }
     else if (this.players[Object.keys(this.sockets)[0]].score < this.players[Object.keys(this.sockets)[1]].score)
     {
       this.feed.shift();
       this.feed.push(this.players[Object.keys(this.sockets)[1]].username + " won!")
+      winningPlayerIndex = 1;
     }
-    else //tie
+    else //in case of a tie, the players' original scores are compared
     {
       if (originalPlayer0Score > originalPlayer1Score)
       {
         this.feed.shift();
         this.feed.push(this.players[Object.keys(this.sockets)[0]].username + " won (after tiebreaker)!")
+        winningPlayerIndex = 0;
       }
       else if (originalPlayer0Score < originalPlayer1Score)
       {
         this.feed.shift();
         this.feed.push(this.players[Object.keys(this.sockets)[1]].username + " won (after tiebreaker)!")
+        winningPlayerIndex = 1;
       }
       else
       {
         this.feed.shift();
         this.feed.push("The game ended in a tie. That is a rare outcome.")
+        winningPlayerIndex = -1;
       }
     }
 
@@ -1121,7 +1055,7 @@ class Game {
     this.lastUpdateTime = now;
     if (this.feed.length == 4)
     {
-
+      //if there have been four passes in a row, the game should end
       let bFoundNonPass = false;
       for (let i = 0; i < this.feed.length;i++)
       {
@@ -1146,11 +1080,9 @@ class Game {
     if (this.bShouldSendUpdate) {
       if (Object.keys(this.sockets).length > 1)
       {
-        if (!this.bGameStarted)
+        if (!this.bGameStarted) //start game if there are at least two players connected
         {
           this.bGameStarted = true;
-
-          //console.log("Starting game!");
           this.startGame();
         }
 
@@ -1160,7 +1092,7 @@ class Game {
         if (this.bGameStarted)
         {
           this.bGameStarted = false;
-          //console.log("Game ending cuz someone quit");
+
         }
       }
       const lobbyboard = this.getLobbyboard();
@@ -1170,10 +1102,11 @@ class Game {
 
         if (player.selectedObjects.length == 2)
         {
-
           this.switchTiles(player);
         }
+        //send update to player
         socket.emit(Constants.MSG_TYPES.GAME_UPDATE,this.createUpdate(player,lobbyboard));
+        //ensure that the player's click position is reset
         player.setClickPosition(-1,-1);
       })
       this.bShouldSendUpdate = false;
@@ -1184,7 +1117,6 @@ class Game {
 
   getLobbyboard()
   {
-
     return Object.values(this.players)
       .map(p => ({username: p.username, score: Math.round(p.score),bMyTurn:p.bMyTurn,feed:this.feed,tilesLeft:this.tiles.length }));
   }

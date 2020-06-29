@@ -73,22 +73,4 @@ Promise.all([
     cancelMoves();
   }
 
-
-
-
-
-
 }).catch(console.error);
-
-export function ToggleActionsDiv(hide)
-{
-  if (hide)
-  {
-    console.log("hiding")
-    actionsDiv.className = "hidden";
-  }
-  else
-  {
-    actionsDiv.classList.remove("hidden");
-  }
-}

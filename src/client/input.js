@@ -1,3 +1,4 @@
+//this files handles user input 
 
 import { sendInput } from './networking';
 const canvas = document.getElementById('game-canvas');
@@ -13,7 +14,6 @@ function onTouchInput(e) {
 
 
 function handleInput(x, y) {
-
   sendInput(x,y);
 }
 
@@ -22,15 +22,11 @@ function handleInput(x, y) {
 
 
 export function startCapturingInput() {
-  //window.addEventListener('mousemove', onMouseInput);
   canvas.addEventListener('click', onMouseInput);
-  //window.addEventListener('touchstart', onTouchInput);
-  //window.addEventListener('touchmove', onTouchInput);
+  canvas.addEventListener('touchstart', onTouchInput);
 }
 
 export function stopCapturingInput() {
-  //window.removeEventListener('mousemove', onMouseInput);
   canvas.removeEventListener('click', onMouseInput);
-  //window.removeEventListener('touchstart', onTouchInput);
-  //window.removeEventListener('touchmove', onTouchInput);
+  canvas.removeEventListener('touchstart', onTouchInput);
 }

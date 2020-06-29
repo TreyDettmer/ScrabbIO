@@ -1,3 +1,5 @@
+//this file handles sending messages from the client to the server.
+
 import io from 'socket.io-client';
 import { throttle } from 'throttle-debounce';
 import { processGameUpdate } from './state';
@@ -17,14 +19,6 @@ export const connect = () => (
   connectedPromise.then(() => {
     // Register callbacks
     socket.on(Constants.MSG_TYPES.GAME_UPDATE, processGameUpdate);
-
-    // socket.on('disconnect', () => {
-    //   console.log('Disconnected from server.');
-    //   document.getElementById('disconnect-modal').classList.remove('hidden');
-    //   document.getElementById('reconnect-button').onclick = () => {
-    //     window.location.reload();
-    //   };
-    // });
   })
 );
 

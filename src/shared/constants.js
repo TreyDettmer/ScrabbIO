@@ -1,12 +1,10 @@
 module.exports = Object.freeze({
   TILES_PER_PLAYER: 7,
-  MAP_SIZE: 3000,
   BOARD_TILES: 15,
   MSG_TYPES: {
     JOIN_GAME: 'join_game',
     GAME_UPDATE: 'update',
     INPUT: 'input',
-    GAME_OVER: 'dead',
     INIT_CANVAS: 'init_canvas',
     PLAYER_ACTION:
     {

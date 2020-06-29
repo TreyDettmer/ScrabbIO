@@ -1,3 +1,5 @@
+//this file holds experiemental tile data. I used it for testing certain game features.
+
 data = [
   {
     "letter": 'a',

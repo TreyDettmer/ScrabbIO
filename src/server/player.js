@@ -1,3 +1,5 @@
+//player object handles information about each player
+
 class Player {
   constructor(id, username)
   {
@@ -30,7 +32,6 @@ class Player {
 
   setClickPosition(x,y)
   {
-    //console.log("x: " + x + " y: " + y);
     this.clickPosition = [x,y];
   }
 

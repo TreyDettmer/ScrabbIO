@@ -1,4 +1,6 @@
-const GameObject = require('./GameObject');
+//GameSpace is a game object that can contain a tile
+
+const GameObject = require('../server/GameObject');
 
 class GameSpace extends GameObject {
   constructor(xPosition = 0,yPosition = 0,width=1,height=1,bSelected=false,letterMultiply = 1.0,wordMultiply = 1.0)
@@ -16,15 +18,6 @@ class GameSpace extends GameObject {
     this.tile = tile;
     this.bOccupied = true;
   }
-  // toString()
-  // {
-  //   return `xPosition: ${this.xPosition},
-  //           yPosition: ${this.yPosition},
-  //           width: ${this.width},
-  //           height: ${this.height},
-  //           tile: ${this.tile},
-  //           bOccupied: ${this.bOccupied}`
-  // }
 }
 
 module.exports = GameSpace;

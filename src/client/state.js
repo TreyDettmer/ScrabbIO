@@ -1,4 +1,4 @@
-
+//this file handles sending updates to the client
 import { updateLobbyboard } from './lobbyboard';
 // The "current" state will always be RENDER_DELAY ms behind server time.
 // This makes gameplay smoother and lag less noticeable.
@@ -69,10 +69,6 @@ export function getCurrentState() {
       lobbyboard: baseUpdate.lobbyboard,
       board: baseUpdate.board
     };
-    // return {
-    //   me: interpolateObject(baseUpdate.me, next.me, ratio),
-    //   others: interpolateObjectArray(baseUpdate.others, next.others, ratio),
-    //   bullets: interpolateObjectArray(baseUpdate.bullets, next.bullets, ratio),
-    // };
+
   }
 }

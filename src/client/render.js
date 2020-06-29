@@ -1,14 +1,10 @@
-
+//this file handles what is rendered to the screen
 const Constants = require('../shared/constants');
 import { getCurrentState } from './state';
-import { MyRect } from './CanvasObjectLocations';
-const GameSpace = require('../server/GameSpace');
-import { sendCanvas, confirmMove, SendExchangedTiles } from './networking';
-import { ToggleActionsDiv } from './index';
+const GameSpace = require('../shared/GameSpace');
+import { sendCanvas, confirmMove, SendExchangedTiles, ToggleActionsDiv } from './networking';
 import { debounce } from 'throttle-debounce';
-const { MAP_SIZE } = Constants;
 
-// Get the canvas graphics context
 const canvas = document.getElementById('game-canvas');
 const actions_div = document.getElementById('actions-div');
 const tile_div = document.getElementById('blank-tile-div');
@@ -38,22 +34,18 @@ function setCanvasDimensions() {
 
 window.addEventListener('resize', debounce(40, setCanvasDimensions));
 
+
 export function setBlankTileLetter(letter)
 {
   if( letter.toUpperCase() != letter.toLowerCase() )
   {
     blankTileLetter = letter;
   }
-  else
-  {
-    console.log("Can't assign " + letter + " to blank tile");
-  }
-
 }
 
 export function exchangeTiles(letters)
 {
-  if (/^[a-z]+$/i.test(letters))
+  if (/^[a-z]+$/i.test(letters)) //ensure that letters are letters in the english alphabet
   {
     SendExchangedTiles(letters.toLowerCase());
   }
@@ -61,10 +53,6 @@ export function exchangeTiles(letters)
 }
 
 function render() {
-  // const { me, others, bullets } = getCurrentState();
-  // if (!me) {
-  //   return;
-  // }
   const {t,me,lobbyboard,board} = getCurrentState();
   if (!me)
   {
@@ -121,11 +109,13 @@ function render() {
     }
     //render board
     RenderBoard();
+    //render tile rack
     RenderTileRack();
     if (bInitalizedCanvas == false)
     {
+      //send client's canvas information to the server
+
       let boardSpaces = []
-      //initalize canvas
       for (let row = 0; row < Constants.BOARD_TILES; row++)
       {
         boardSpaces[row] = []
@@ -174,13 +164,12 @@ function render() {
     }
     else
     {
-
       RenderBoardSpaces(me,board);
       RenderTileRackTiles(me);
       if (me.clickPosition[0] != -1)
       {
 
-        if (CheckForObjectClick(me))
+        if (CheckForObjectClick(me)) // check if a game object was clicked
         {
           let spaces = [];
           spaces[0] = me.boardSpaces;
@@ -188,7 +177,6 @@ function render() {
           spaces[2] = blankTileLetter;
           sendCanvas(spaces);
         }
-        //console.log("clicked at: " + me.clickPosition);
       }
       me.clickPosition = [-1,-1];
 
@@ -418,13 +406,13 @@ function CheckForObjectClick(me)
 }
 
 
-function BoardContains(position)
+function BoardContains(position) // check if board contains the given (x,y) position
 {
   return canvas.width / 2 - Constants.BOARD.SIZE/2 <= position[0] && position[0] <= canvas.width / 2 - Constants.BOARD.SIZE/2 + Constants.BOARD.SIZE &&
          canvas.height / 2 - Constants.BOARD.SIZE/2 <= position[1] && position[1] <= canvas.height / 2 - Constants.BOARD.SIZE/2 + Constants.BOARD.SIZE;
 }
 
-function TileRackContains(position)
+function TileRackContains(position) // check if tile rack contains the given (x,y) position
 {
   let rackX = canvas.width / 2 - Constants.BOARD.SIZE*Constants.RACK_WIDTH/2 + Constants.BOARD.BORDER_WIDTH;
   let rackY = canvas.height / 2 + Constants.BOARD.SIZE/2 + Constants.BOARD.BORDER_WIDTH + 2;
@@ -443,13 +431,11 @@ function renderBackground() {
 
 export function ConfirmedAction()
 {
-
   confirmMove(blankTileLetter);
 }
 
 
 
 export function startRendering() {
-  //clearInterval(renderInterval);
   var renderInterval = setInterval(render, 1000 / 60);
 }

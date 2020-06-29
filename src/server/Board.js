@@ -1,4 +1,6 @@
-const GameSpace = require('./GameSpace');
+//this class represents the game board and its board spaces
+
+const GameSpace = require('../shared/GameSpace');
 const Constants = require('../shared/constants.js');
 
 
