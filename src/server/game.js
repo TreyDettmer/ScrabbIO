@@ -889,6 +889,11 @@ class Game {
     if (data.includes(word + "\r"))
     {
       bFoundWord = true;
+      console.log("found word: " + word)
+    }
+    else
+    {
+      console.log("failed to find word: " + word)
     }
     return bFoundWord;
   }
