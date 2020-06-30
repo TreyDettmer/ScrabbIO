@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <title>ScrabbyIO</title>
+  <link href="game.8da23e6dc02fbe8c818a.css" rel="stylesheet"></head>
+
+  <body>
+    <canvas id="game-canvas" ></canvas>
+    <div id="full-lobby-div" class="hidden">
+      <h1>The lobby is full.</h1>
+    </div>
+    <div id="play-menu" class="hidden">
+      <h1>ScrabbyIO</h1>
+      <input type="text" id="username-input" placeholder="Username" />
+      <button id="play-button">PLAY</button>
+    </div>
+    <div id="lobby-wait-div"class="hidden">
+      <h1>Waiting for other player to join...</h1>
+    </div>
+    <div id="lobbyboard" class="hidden">
+      <table>
+        <tr>
+          <th>Username</th>
+          <th>Score</th>
+          <tr><td></td><td></td></tr>
+          <tr><td></td><td></td></tr>
+
+        </tr>
+      </table>
+    </div>
+    <div id="turn-div"class="hidden"></div>
+    <div id="tiles-left-div"class="hidden"></div>
+    <div id="key-div" class="hidden">
+      <h2>Key</h2>
+      <div id="double-word">
+        <div class="square_dw"></div>
+        <h3>Double Word Score</h3>
+      </div>
+      <div id="double-letter">
+        <div class="square_dl"></div>
+        <h3>Double Letter Score</h3>
+      </div>
+      <div id="triple-letter">
+        <div class="square_tl"></div>
+        <h3>Triple Letter Score</h3>
+      </div>
+      <div id="triple-word">
+        <div class="square_tw"></div>
+        <h3>Triple Word Score</h3>
+      </div>
+    </div>
+    <div id="actions-div" class="hidden">
+      <button id="confirm-action-button">Confirm Move</button>
+      <button id="cancel-moves-button">Cancel Moves</button>
+      <button id="end-turn-button">End Turn</button>
+
+    </div>
+    <div id="blank-tile-div"class="hidden">
+      <h3>Choose Blank Letter</h3>
+      <input type="text" id="tile-input" placeholder="Type letter here" />
+      <button id="tile-choose-button">Choose</button>
+    </div>
+    <div id = "exchange-tiles-div"class="hidden">
+      <h3>Tiles To Exchange</h3>
+      <input type="text" id="exchange-tiles-input" placeholder="Example: abcd" />
+      <button id="exchange-tiles-button">Exchange</button>
+    </div>
+    <div id = "game-feed" class="hidden">
+      <table>
+        <tr></tr>
+        <tr></tr>
+        <tr></tr>
+        <tr></tr>
+      </table>
+    </div>
+
+  <script type="text/javascript" src="game.38b59929c8d04ad001e3.js"></script></body>
+
+</html>
