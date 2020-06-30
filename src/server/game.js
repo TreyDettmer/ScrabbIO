@@ -886,15 +886,9 @@ class Game {
     var bFoundWord = false;
     var lrs = new lineReader(filePath);
     var data = lrs.toLines();
-    console.log(data.slice(0,25));
-    if (data.includes(word + "\r"))
+    if (data.includes(word)) //if running locally, change to data.includes(word + "\r")
     {
       bFoundWord = true;
-      console.log("found word: " + word)
-    }
-    else
-    {
-      console.log("failed to find word: " + word)
     }
     return bFoundWord;
   }
