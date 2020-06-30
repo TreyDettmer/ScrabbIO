@@ -11,7 +11,7 @@ const Game = require('./game');
 
 // Setup an Express server
 const app = express();
-app.use(express.static('public'));
+app.use(express.static(__dirname + 'public'));
 
 if (process.env.NODE_ENV === 'development') {
   // Setup Webpack for development
