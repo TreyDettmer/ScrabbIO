@@ -874,12 +874,12 @@ class Game {
     var filePath;
     if (word.length > 1)
     {
-      filePath = path.join('public','DictionaryData', word[0].toUpperCase(), word[1].toUpperCase() + '.txt');
+      filePath = path.join('app/public', 'DictionaryData', word[0].toUpperCase(), word[1].toUpperCase() + '.txt');
 
     }
     else //this shouldn't ever happen since all words played must be longer than 1 letter
     {
-      filePath = path.join('public','DictionaryData', word[0].toUpperCase(), word[0].toUpperCase() + '.txt');
+      filePath = path.join('app/public', 'DictionaryData', word[0].toUpperCase(), word[0].toUpperCase() + '.txt');
     }
 
     //parse through the dictionary looking for that word
