@@ -361,6 +361,10 @@ class Game {
     if (_checkWords[0]) //if all moves are valid
     {
       let tilesNeeded = Constants.TILES_PER_PLAYER - player.tiles.length;
+      if (this.hotBoardSpaces.length == Constants.TILES_PER_PLAYER) //if player plays 7 letter word then he/she gets 50 extra points
+      {
+        player.score += 50;
+      }
       if (this.tiles.length >= tilesNeeded)
       {
         for (let i = 0; i < tilesNeeded;i++)

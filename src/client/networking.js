@@ -23,7 +23,12 @@ export const connect = () => (
 );
 
 export const play = username => {
-  socket.emit(Constants.MSG_TYPES.JOIN_GAME, username);
+
+  if (screen.width > 1366)
+  {
+    socket.emit(Constants.MSG_TYPES.JOIN_GAME, username);
+  }
+
 };
 
 export const sendInput = throttle(20, (x,y) => {

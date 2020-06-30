@@ -219,6 +219,10 @@ h3 {
   font-size: var(--fs-h3);
 }
 
+#exchange-tiles-div p {
+  font-size: var(--fs-body);
+}
+
 #game-feed {
   position: fixed;
   top: 60%;
