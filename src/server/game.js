@@ -871,6 +871,7 @@ class Game {
     let firstLetterWordIndex = word[0].toUpperCase();
     let firstLetterAlphabetIndex = alphabet.indexOf(firstLetterWordIndex);
     //let filePath = '/DictionaryData/' + word[0].toUpperCase();
+    var filePath;
     if (word.length > 1)
     {
       filePath = path.join(__dirname, 'DictionaryData', word[0].toUpperCase(), word[1].toUpperCase() + '.txt');
