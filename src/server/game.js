@@ -868,18 +868,18 @@ class Game {
   //method checks that given word is an English word
   lookUpWord(word)
   {
-    let firstLetterWordIndex = word[0].toUpperCase();
+    let firstLetterWordIndex = word[0].toLowerCase();
     let firstLetterAlphabetIndex = alphabet.indexOf(firstLetterWordIndex);
     //let filePath = '/DictionaryData/' + word[0].toUpperCase();
     var filePath;
     if (word.length > 1)
     {
-      filePath = path.join(__dirname,'DictionaryData', word[0].toUpperCase(), word[1].toUpperCase() + '.txt');
+      filePath = path.join(__dirname,'DictionaryData', word[0].toLowerCase(), word[1].toLowerCase() + '.txt');
 
     }
     else //this shouldn't ever happen since all words played must be longer than 1 letter
     {
-      filePath = path.join(__dirname,'DictionaryData', word[0].toUpperCase(), word[0].toUpperCase() + '.txt');
+      filePath = path.join(__dirname,'DictionaryData', word[0].toLowerCase(), word[0].toLowerCase() + '.txt');
     }
 
     //parse through the dictionary looking for that word
