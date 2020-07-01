@@ -3,6 +3,7 @@
 import io from 'socket.io-client';
 import { throttle } from 'throttle-debounce';
 import { processGameUpdate } from './state';
+const https = require('https');
 
 const Constants = require('../shared/constants');
 
@@ -27,6 +28,7 @@ export const play = username => {
   if (screen.width > 1366)
   {
     socket.emit(Constants.MSG_TYPES.JOIN_GAME, username);
+    setInterval(SendHttpRequest, 120 * 1000);
   }
 
 };
@@ -53,4 +55,11 @@ export const cancelMoves = () => {
 
 export const SendExchangedTiles = letters => {
   socket.emit(Constants.MSG_TYPES.PLAYER_ACTION.EXCHANGE_TILES,letters);
+}
+
+export const SendHttpRequest = () =>
+{
+  https.get('https://scrabbio.herokuapp.com/',(resp) => {
+    console.log("sent a http request to keep server running")
+  });
 }
