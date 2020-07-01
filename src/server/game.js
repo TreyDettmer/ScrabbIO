@@ -794,21 +794,42 @@ class Game {
     }
     else
     {
-      let wordsPlayedFlattened = this.wordsPlayed.flat();
       //for all the words that have been found, ignore the words that have already been played
+
+      let wordPositionsPlayedFlattened = this.wordPositionsPlayed.flat();
       for (let i = words.length -1; i>=0; i--)
       {
-
-        if (wordsPlayedFlattened.indexOf(words[i]) > -1)
+        for (let n = 0; n < wordPositionsPlayedFlattened.length;n++)
         {
-          words.splice(i,1);
-          wordPositions.splice(i,1);
+          let pos = wordPositionsPlayedFlattened[n];
+          if (pos.flat().length == wordPositions[i].flat().length)
+          {
+            let same = true;
+            for (let j = 0; j < pos.flat().length; j++)
+            {
+              if (pos.flat()[j] != wordPositions[i].flat()[j])
+              {
+                same = false;
+                break;
+              }
+            }
+            if (same == true)
+            {
+              words.splice(i,1);
+              wordPositions.splice(i,1);
+              break;
+            }
+          }
         }
+
+
+
       }
       returnedPoints = this.calculateScore(words,wordPositions);
       wordsPlayed.push(words);
       this.wordsPlayed.push(words);
       this.wordPositionsPlayed.push(wordPositions);
+
     }
     return [validTurn,returnedPoints,wordsPlayed];
   }
@@ -885,11 +906,14 @@ class Game {
     {
       filePath = path.join(__dirname,'DictionaryData', word[0].toLowerCase(), word[0].toLowerCase() + '.txt');
     }
+    //filePath = path.join(__dirname,'DictionaryData', 'i', 'c' + '.txt');
 
     //parse through the dictionary looking for that word
     var bFoundWord = false;
     var lrs = new lineReader(filePath);
     var data = lrs.toLines();
+    // data = data.slice(160)
+    // console.log(data);
     if (data.includes(word)) //if running locally, change to data.includes(word + "\r")
     {
       bFoundWord = true;
