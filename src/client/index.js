@@ -5,6 +5,7 @@ import { startCapturingInput, stopCapturingInput } from './input';
 import {setLobbyboardHidden} from './lobbyboard';
 import './css/style.css';
 
+const canvas = document.getElementById('game-canvas');
 const playMenu = document.getElementById('play-menu');
 const playButton = document.getElementById('play-button');
 const usernameInput = document.getElementById('username-input');
@@ -34,6 +35,7 @@ Promise.all([
   playButton.onclick = () => {
     if (/\S/.test(usernameInput.value))
     {
+      canvas.classList.remove("hidden");
       play(usernameInput.value);
       playMenu.classList.add("hidden");
       turnDiv.classList.remove("hidden");
