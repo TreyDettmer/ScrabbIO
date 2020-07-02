@@ -28,7 +28,7 @@ export const play = username => {
   if (screen.width > 1366)
   {
     socket.emit(Constants.MSG_TYPES.JOIN_GAME, username);
-    setInterval(SendHttpRequest, 120 * 1000);
+    setInterval(SendHttpRequest, 600 * 1000);
   }
 
 };

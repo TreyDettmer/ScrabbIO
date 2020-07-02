@@ -100,6 +100,17 @@ class Game {
           bLegalExchange = true;
 
         }
+        else if (player.tiles[i].bWasBlank)
+        {
+          if (letters.includes("!"))
+          {
+            exchangedTileCount++;
+            letters = letters.replace("!",'');
+            let removedTile = player.tiles.splice(i,1);
+            exchangedTiles.push(removedTile[0]);
+            bLegalExchange = true;
+          }
+        }
 
       }
       if (bLegalExchange)

@@ -45,10 +45,9 @@ export function setBlankTileLetter(letter)
 
 export function exchangeTiles(letters)
 {
-  if (/^[a-z]+$/i.test(letters)) //ensure that letters are letters in the english alphabet
-  {
-    SendExchangedTiles(letters.toLowerCase());
-  }
+
+  SendExchangedTiles(letters);
+
 
 }
 

@@ -239,6 +239,7 @@ h3 {
 
 #exchange-tiles-div p {
   font-size: var(--fs-body);
+  margin: 0 auto;
 }
 
 #game-feed {
