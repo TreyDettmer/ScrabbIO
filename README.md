@@ -15,8 +15,7 @@ I had never developed an online multiplayer application before (outside of using
 
 One initial challenge that I faced was figuring out an easy and moduable way to handle how players play tiles and do other actions. I had to manually check if tiles or board spaces were clicked based on where on the screen a player clicked. This involved sending information back and forth between the clients and server about which game objects were selected and where the player clicked. For some parts of the game I was able to use raw HTML buttons and text boxes which was convenient.
 
-The major challenge that I faced was enforcing the game rules. Here is a general outline of the logic that the game follows to make sure that a player's turn was valid.
-- Everything below happens once the player clicks on the "End Turn" button.
+The major challenge that I faced was enforcing the game rules. Here is a general outline of the logic that the game follows to make sure that a player's turn was valid. Everything below happens once the player clicks on the "End Turn" button.
 1. The game ensures that the tiles that were added to the board are in the same row or column
 2. The game iterates over the board looking for possible words
    * Look at each row and find clumps of letters
@@ -29,3 +28,8 @@ The major challenge that I faced was enforcing the game rules. Here is a general
    * For each new word, iterate over each board space that the word's tiles occupy
        * Apply the board space's bonus to the word and/or tile
    * Keep track of how many points have been score
+
+Once the game logic was finished, I needed to setup the web server that would host the game. I used https://heroku.com/ which allows developers to host web applications for free. One issue that I had with using Heroku was that free Heroku apps sleep (stop working) after 30 minutes of no web traffic. It turned out that while playing my game, no actual web requests were being sent to the web server (I'm not sure if that's the correct explanation). To fix this, every two minutes, each client that is connected to the server sends an http get request in order to keep the web server awake.
+
+## Final Thoughts
+I don't plan on making another game from scratch in NodeJS for awhile since coding and interacting with the drawn graphics was tedious to say the least. I still enjoyed making this project because I was able to combine my love for game development with my interest in learning new things like web based multiplayer. Also I can easily share this project with others since it's on the internet so that's nice. 
