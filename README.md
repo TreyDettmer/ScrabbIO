@@ -15,4 +15,17 @@ I had never developed an online multiplayer application before (outside of using
 
 One initial challenge that I faced was figuring out an easy and moduable way to handle how players play tiles and do other actions. I had to manually check if tiles or board spaces were clicked based on where on the screen a player clicked. This involved sending information back and forth between the clients and server about which game objects were selected and where the player clicked. For some parts of the game I was able to use raw HTML buttons and text boxes which was convenient.
 
-The major challenge that I faced was enforcing the game rules. Here is a general outline of the steps that the game takes to make sure that a player's turn was valid.
+The major challenge that I faced was enforcing the game rules. Here is a general outline of the logic that the game follows to make sure that a player's turn was valid.
+- Everything below happens once the player clicks on the "End Turn" button.
+1. The game ensures that the tiles that were added to the board are in the same row or column
+2. The game iterates over the board looking for possible words
+   * Look at each row and find clumps of letters
+   * Look at each column and find clumps of letters
+3. The game stores the possible words and the positions of each tile in each word 
+4. The game checks that each possible word is not isolated (not connected to any other words)
+5. The game looks up each possible word in the English dictionary to confirm that the word is an actual English word
+6. If all of the above have been done and there are no issues, then the game calculates the score for that turn
+   * Look at the array of possible words and their positions and filter out the words from previous turns.
+   * For each new word, iterate over each board space that the word's tiles occupy
+       * Apply the board space's bonus to the word and/or tile
+   * Keep track of how many points have been score
