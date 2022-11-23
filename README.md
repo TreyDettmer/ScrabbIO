@@ -1,7 +1,10 @@
 # ScrabbIO
 **Browser Based Online Two Player Scrabble Game**
+
+## :warning:Disclaimer:warning:
+(November 22nd, 2022) I am no longer able to host this project online. The project is a NodeJS application which is not supported by the Github Pages hosting platform. I previously used Heroku to host the application but they are no longer offering a free plan :disappointed:  
 ## Where To Play
-Visit https://scrabbio.herokuapp.com/ and have a friend do the same. Two players can be playing the game at a time. If your screen size is too small or there are already two people playing on the server, then you won't be able to play.
+Visit ~~ht<span>tps://</span>scrabbio.herokuapp.com/~~ and have a friend do the same. Two players can be playing the game at a time. If your screen size is too small or there are already two people playing on the server, then you won't be able to play.
 
 ## How To Play
 Watch [this video](https://www.youtube.com/watch?v=CFA-1d8oTLw&feature=youtu.be) to learn how to play. You can view the official Scrabble rules [here](https://scrabble.hasbro.com/en-us/rules).
